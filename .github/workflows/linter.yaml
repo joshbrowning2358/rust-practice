@@ -23,5 +23,5 @@ jobs:
           toolchain: stable
           components: rustfmt
 
-      - name Run rustfmt
+      - name: Run rustfmt
         run: cargo fmt -- --check
