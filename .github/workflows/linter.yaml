@@ -24,4 +24,5 @@ jobs:
           components: rustfmt
 
       - name: Run rustfmt
-        run: cargo fmt -- --check
+        run: cd rust-projects && 
+          cargo fmt -- --check
