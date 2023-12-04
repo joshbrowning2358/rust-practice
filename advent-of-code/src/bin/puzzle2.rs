@@ -1,12 +1,47 @@
+use std::cmp::max;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
     let file_path = "data/puzzle2/input.txt";
-    // let file_path = "data/puzzle2/example.txt";
+    //let file_path = "data/puzzle2/example.txt";
     let ans = puzzle2a(&file_path);
     println!("Answer to puzzle 2a is {ans}");
+
+    let ans = puzzle2b(&file_path);
+    println!("Answer to puzzle 2b is {ans}");
+}
+
+fn puzzle2b(file_path: &str) -> i32 {
+    let mut ans: i32 = 0;
+    let mut red_max: i32;
+    let mut green_max: i32;
+    let mut blue_max: i32;
+    let mut red: i32;
+    let mut green: i32;
+    let mut blue: i32;
+
+    if let Ok(lines) = read_lines(file_path) {
+        for line in lines {
+            red_max = 0;
+            blue_max = 0;
+            green_max = 0;
+            if let Ok(ip) = line {
+                for game_txt in ip.split([':', ';']) {
+                    if !game_txt.starts_with("Game") {
+                        (red, green, blue) = split_game(game_txt);
+                        red_max = max(red, red_max);
+                        blue_max = max(blue, blue_max);
+                        green_max = max(green, green_max);
+                    }
+                }
+            }
+            ans += red_max * blue_max * green_max;
+        }
+    }
+
+    ans
 }
 
 fn puzzle2a(file_path: &str) -> i32 {
@@ -46,9 +81,14 @@ where P: AsRef<Path>, {
 }
 
 fn is_valid_game(game_txt: &str) -> bool {
-    let mut green: i8 = 0;
-    let mut red: i8 = 0;
-    let mut blue: i8 = 0;
+    let (red, green, blue) = split_game(game_txt);
+    red <= 12 && green <= 13 && blue <= 14
+}
+
+fn split_game(game_txt: &str) -> (i32, i32, i32) {
+    let mut green: i32 = 0;
+    let mut red: i32 = 0;
+    let mut blue: i32 = 0;
     let mut color_str: String;
     let mut num_str: String;
     let mut found_space: bool;
@@ -71,11 +111,11 @@ fn is_valid_game(game_txt: &str) -> bool {
         }
             
         match color_str.as_str() {
-            "blue" => {blue = num_str.parse::<i8>().unwrap();}
-            "red" => {red = num_str.parse::<i8>().unwrap();}
-            "green" => {green = num_str.parse::<i8>().unwrap();}
+            "blue" => {blue = num_str.parse::<i32>().unwrap();}
+            "red" => {red = num_str.parse::<i32>().unwrap();}
+            "green" => {green = num_str.parse::<i32>().unwrap();}
             &_ => {println!("Found invalid string in parsing: {color_str}!");}
         }
     }
-    red <= 12 && green <= 13 && blue <= 14
+    (red, green, blue)
 }
