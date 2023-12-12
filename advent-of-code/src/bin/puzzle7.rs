@@ -1,11 +1,13 @@
+use itertools::Itertools;
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
-    let file_path = "./data/puzzle7/input.txt";
-    //let file_path = "./data/puzzle7/example.txt";
+    //let file_path = "./data/puzzle7/input.txt";
+    let file_path = "./data/puzzle7/example.txt";
     //let file_path = "./data/puzzle7/hard.txt";
     let ans = puzzle7a(&file_path);
     println!("First answer is {ans}!\n");
@@ -21,21 +23,23 @@ fn puzzle7a(file_path: &str) -> i32 {
     let mut pair: HashMap<&str, i32> = HashMap::new();
     let mut two_pair: HashMap<&str, i32> = HashMap::new();
     let mut full_house: HashMap<&str, i32> = HashMap::new();
-    //let mut cards = String::from(' ');
-    //let mut bid = String::new();
-    let ip: &str;
+    let mut high_card: HashMap<&str, i32> = HashMap::new();
+
+    let contents = fs::read_to_string(file_path)
+        .expect("Should have been able to read the file");
+    println!("\n {contents}");
+
 
     let mut char_sorter: HashMap<char, i32> = HashMap::new();
 
-    if let Ok(lines) = read_lines(file_path) {
-        for line in lines {
-            if let Ok(ip) = line {
-                let (cards, bid) = match ip.split_once(' ') {
+    for line in contents.split('\n') {
+        if line.len() > 5 {
+                let (cards, bid) = match line.split_once(' ') {
                     Some((x, y)) => {(x, y)},
                     None => {panic!("Unable to parse hand/bid!")}
                 };
                 println!("Parsed cards {cards} and bid {bid}");
-                for card in cards.clone().chars() {
+                for card in cards.chars() {
                     if char_sorter.contains_key(&card) {
                         *char_sorter.get_mut(&card).unwrap() += 1;
                     } else {
@@ -55,33 +59,38 @@ fn puzzle7a(file_path: &str) -> i32 {
                         second = *cnt
                     }
                 }
+
                 match biggest {
-                    5 => {five_kind.insert(cards.clone(), bid.parse::<i32>().unwrap());}
-                    4 => {println!("Four")}
+                    5 => {five_kind.insert(cards, bid.parse::<i32>().unwrap());}
+                    4 => {four_kind.insert(cards, bid.parse::<i32>().unwrap());}
                     3 => {
                         if second == 2 {
-                            println!("Full house");
+                            full_house.insert(cards, bid.parse::<i32>().unwrap());
                         } else {
-                            println!("3");
+                            three_kind.insert(cards, bid.parse::<i32>().unwrap());
                         }
                     }
                     2 => {
                         if second == 2 {
-                            println!("Two pair");
+                            two_pair.insert(cards, bid.parse::<i32>().unwrap());
                         } else {
-                            println!("2");
+                            pair.insert(cards, bid.parse::<i32>().unwrap());
                         }
                     }
-                    1 => {println!("One")}
+                    1 => {high_card.insert(cards, bid.parse::<i32>().unwrap());}
                     _ => {panic!("This shouldn't happen!");}
                 };
 
                 char_sorter.clear();
-                biggest = 0;
-                second = 0;
 
-            }
         }
+    }
+    //for k in five_kind.keys().sort_by(|a, b| sorter_map(a).cmp(sorter_map(&b)) {
+    //    println!("Key is {k}");
+    //}
+
+    for (k, v) in three_kind.iter().sorted_by(|a, b| sorter_map(a.to_string()).cmp(&sorter_map(b.to_string()))) {
+        println!("{k} and {v}");
     }
 
     let ans = 0;
@@ -98,4 +107,19 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where P: AsRef<Path>, {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+fn sorter_map(s: String) {
+    for i in 0..s.len() {
+        let c = s.remove(i);
+        if c == 'A' {
+            s.insert(i, 'Z');
+        } else if c == 'K' {
+            s.insert(i, 'Y');
+        } else if c == 'T' {
+            s.insert(i, 'A');
+        } else {
+            s.insert(i, c);
+        }
+    }
 }
