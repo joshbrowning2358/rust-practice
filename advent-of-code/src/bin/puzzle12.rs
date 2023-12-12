@@ -3,15 +3,16 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
+    //let file_path = "data/puzzle12/easy.txt";
     //let file_path = "data/puzzle12/example.txt";
-    //let file_path = "data/puzzle12/input.txt";
-    let file_path = "data/puzzle12/hard.txt";
+    let file_path = "data/puzzle12/input.txt";
+    //let file_path = "data/puzzle12/hard.txt";
 
     let mut ans = puzzle12a(file_path);
     println!("Answer to puzzle 12a is {ans};");
 
-    ans = puzzle12b(file_path);
-    println!("Answer to puzzle 12b is {ans};");
+    //ans = puzzle12b(file_path);
+    //println!("Answer to puzzle 12b is {ans};");
 }
 
 fn puzzle12a(file_path: &str) -> i64 {
@@ -22,9 +23,12 @@ fn puzzle12a(file_path: &str) -> i64 {
         for line in lines {
             if let Ok(ip) = line {
                 let (missing, counts_str) = ip.split_once(' ').unwrap();
-                println!("\n\nMissing is {missing}, counts is {counts_str}\n\n");
+                //println!("\n\nMissing is {missing}, counts is {counts_str}\n\n");
                 counts = counts_str.split(',').map(|x| x.parse::<i32>().unwrap()).collect();
-                ans += get_possibilities(missing.to_string(), counts);
+
+                let new_val = get_possibilities(missing.to_string(), counts);
+                println!("Found {new_val} possibilities for row {ip}");
+                ans += new_val;
             }
         }
     }
@@ -50,9 +54,11 @@ fn puzzle12b(file_path: &str) -> i64 {
                 counts = counts_str.split(',').map(|x| x.parse::<i32>().unwrap()).collect();
                 counts = counts.repeat(5);
                 //counts = counts.iter().cycle().take(counts.len() * 5).collect();
-                println!("\n\nMissing is {missing}, counts is {:?}\n\n", counts);
+                //println!("\n\nMissing is {missing}, counts is {:?}\n\n", counts);
 
-                ans += get_possibilities(missing, counts);
+                let new_val = get_possibilities(missing, counts);
+                println!("Found {new_val} possibilities for row {ip}");
+                ans += new_val;
             }
         }
     }
@@ -65,28 +71,33 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
 
     //println!("Checking {row}");
     let mut obs_cnts: Vec<i32> = vec![];
-    let mut current_cnt: i32 = 0;
-    for c in row.chars() {
-        if c == '#' {
-            current_cnt += 1;
-        } else if c == '?' {
-            contains_question = true;
-            break
-        } else if current_cnt > 0 {
-            obs_cnts.push(current_cnt);
-            current_cnt = 0;
-        }
+    let mut current_cnt = 0;
+    let mut chars = row.chars();
+    loop {
+        match chars.next() {
+            Some(c) => {
+                if c == '#' {
+                    current_cnt += 1;
+                } else if c == '?' {
+                    contains_question = true;
+                    break
+                } else if current_cnt > 0 {
+                    obs_cnts.push(current_cnt);
+                    current_cnt = 0;
+                }
+            }
+            None => {break}
+        };
     }
     if (current_cnt > 0) & (!contains_question) {
         obs_cnts.push(current_cnt);
     }
 
     //println!("Found {:?} for observed, have {:?} for expected", obs_cnts, cnts);
-    if contains_question {
+    if obs_cnts.len() > cnts.len() {
+        return 0
+    } else if (obs_cnts.len() < cnts.len()) & contains_question {
         // Don't branch if invalid
-        if obs_cnts.len() > cnts.len() {
-            return 0
-        }
         if obs_cnts != &cnts[..obs_cnts.len()] {
             return 0
         }
@@ -97,8 +108,51 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
         }
 
         let idx = row.find('?').unwrap();
-        row.replace_range(idx..(idx + 1), "#");
-        ans += get_possibilities(row.clone(), cnts.clone());
+
+        // Current streak is current_cnt
+        let streak = current_cnt as usize;
+        //println!("Counts are {:?} and obs_cnts are {:?}, current is {current_cnt}", cnts, obs_cnts);
+        let next_cnt = cnts[obs_cnts.len()] as usize;
+
+        // Can we fit a #### in the current position?
+        let mut fits: bool = true;
+        let mut expired: bool = false;
+        let mut future_streak = 0;
+        while ((future_streak + streak + 1) < next_cnt) {
+            match chars.next() {
+                Some(x) => {
+                    if x == '.' { // Having a # or ? is ok, a . is not
+                        fits = false;
+                        break
+                    }
+                    future_streak += 1;
+                }
+                None => {
+                    fits = false;
+                    expired = true;
+                    break
+                }
+            };
+        }
+        // Next character must be a ? or . now (or end of string)
+        match chars.next() {
+            Some(x) => {
+                if x== '#' {
+                    fits = false;
+                }
+            }
+            None => {}
+        };
+
+        if fits {
+            let mut repl_str = "#".to_string().repeat(future_streak + 1);
+            let mut new_row = row.clone();
+            if (idx + repl_str.len()) < new_row.len() { // Append a . only if there's space
+                repl_str.push_str(".");
+            }
+            new_row.replace_range(idx..(idx + repl_str.len()), &repl_str);
+            ans += get_possibilities(new_row, cnts.clone());
+        }
         row.replace_range(idx..(idx + 1), ".");
         ans += get_possibilities(row.clone(), cnts.clone());
     } else {
