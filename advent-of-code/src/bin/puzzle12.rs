@@ -11,8 +11,8 @@ fn main() {
     let mut ans = puzzle12a(file_path);
     println!("Answer to puzzle 12a is {ans};");
 
-    //ans = puzzle12b(file_path);
-    //println!("Answer to puzzle 12b is {ans};");
+    ans = puzzle12b(file_path);
+    println!("Answer to puzzle 12b is {ans};");
 }
 
 fn puzzle12a(file_path: &str) -> i64 {
@@ -27,7 +27,7 @@ fn puzzle12a(file_path: &str) -> i64 {
                 counts = counts_str.split(',').map(|x| x.parse::<i32>().unwrap()).collect();
 
                 let new_val = get_possibilities(missing.to_string(), counts);
-                println!("Found {new_val} possibilities for row {ip}");
+                //println!("Found {new_val} possibilities for row {ip}");
                 ans += new_val;
             }
         }
@@ -38,6 +38,8 @@ fn puzzle12a(file_path: &str) -> i64 {
 fn puzzle12b(file_path: &str) -> i64 {
     let mut ans: i64 = 0;
     let mut counts: Vec<i32>;
+
+    let mut row_cnt = 0;
 
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
@@ -57,8 +59,10 @@ fn puzzle12b(file_path: &str) -> i64 {
                 //println!("\n\nMissing is {missing}, counts is {:?}\n\n", counts);
 
                 let new_val = get_possibilities(missing, counts);
-                println!("Found {new_val} possibilities for row {ip}");
+                //println!("Found {new_val} possibilities for row {ip}");
                 ans += new_val;
+                row_cnt += 1;
+                if row_cnt % 2 == 0 {println!("Finished row {row_cnt}!");}
             }
         }
     }
@@ -69,7 +73,6 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
     let mut ans = 0;
     let mut contains_question: bool = false;
 
-    //println!("Checking {row}");
     let mut obs_cnts: Vec<i32> = vec![];
     let mut current_cnt = 0;
     let mut chars = row.chars();
@@ -92,6 +95,7 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
     if (current_cnt > 0) & (!contains_question) {
         obs_cnts.push(current_cnt);
     }
+    //println!("Checking {row}, obs_cnts: {:?}, cnts: {:?}", obs_cnts, cnts);
 
     //println!("Found {:?} for observed, have {:?} for expected", obs_cnts, cnts);
     if obs_cnts.len() > cnts.len() {
@@ -116,9 +120,8 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
 
         // Can we fit a #### in the current position?
         let mut fits: bool = true;
-        let mut expired: bool = false;
         let mut future_streak = 0;
-        while ((future_streak + streak + 1) < next_cnt) {
+        while (future_streak + streak + 1) < next_cnt {
             match chars.next() {
                 Some(x) => {
                     if x == '.' { // Having a # or ? is ok, a . is not
@@ -129,7 +132,6 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
                 }
                 None => {
                     fits = false;
-                    expired = true;
                     break
                 }
             };
@@ -155,12 +157,27 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
         }
         row.replace_range(idx..(idx + 1), ".");
         ans += get_possibilities(row.clone(), cnts.clone());
-    } else {
+    } else if !contains_question { // obs_cnts.len() == cnts.len() so only validate no ? left
         if obs_cnts == cnts {
+            //println!("Success!");
             return 1
         } else {
             return 0
         }
+    } else { // Still contains ? but obs_cnts.len() == cnts.len().  If we have ##..#.??? this could work, for example, but not ##..#.?#?
+        if (current_cnt > 0) | (obs_cnts != cnts) {
+            return 0
+        }
+        loop { // Ensure no # after ?
+            match chars.next() {
+                Some(x) => {
+                    if x == '#' {return 0}
+                }
+                None => break
+            };
+        }
+        //println!("Success!  obs_cnts {:?} cnt {:?}", obs_cnts, cnts);
+        return 1
     }
     ans
 }
