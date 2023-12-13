@@ -9,11 +9,11 @@ fn main() {
     let file_path = "data/puzzle13/input.txt";
     //let file_path = "data/puzzle13/hard.txt";
 
-    let ans = puzzle13a(file_path);
+    let mut ans = puzzle13a(file_path);
     println!("Answer to puzzle 13a is {ans};");
 
-    //ans = puzzle13b(file_path);
-    //println!("Answer to puzzle 13b is {ans};");
+    ans = puzzle13b(file_path);
+    println!("Answer to puzzle 13b is {ans};");
 }
 
 fn puzzle13a(file_path: &str) -> i32 {
@@ -28,23 +28,46 @@ fn puzzle13a(file_path: &str) -> i32 {
                     current_pattern.push_str(&ip.to_string());
                     nrows += 1;
                 } else {
-                    ans += find_reflections(&current_pattern, nrows);
+                    ans += find_reflections(&current_pattern, nrows, 0);
                     current_pattern.clear();
                     nrows = 0;
                 }
             }
         }
     }
-    ans += find_reflections(&current_pattern, nrows);
+    ans += find_reflections(&current_pattern, nrows, 0);
     ans
 }
 
-fn find_reflections(pattern: &str, nrows: usize) -> i32 {
+fn puzzle13b(file_path: &str) -> i32 {
+    let mut ans: i32 = 0;
+    let mut current_pattern = String::new();
+    let mut nrows: usize = 0;
+
+    if let Ok(lines) = read_lines(file_path) {
+        for line in lines {
+            if let Ok(ip) = line {
+                if ip.len() > 1 {
+                    current_pattern.push_str(&ip.to_string());
+                    nrows += 1;
+                } else {
+                    ans += find_reflections(&current_pattern, nrows, 1);
+                    current_pattern.clear();
+                    nrows = 0;
+                }
+            }
+        }
+    }
+    ans += find_reflections(&current_pattern, nrows, 1);
+    ans
+}
+
+fn find_reflections(pattern: &str, nrows: usize, target_diff: i32) -> i32 {
     println!("Pattern is {pattern}");
     let mut ans: i32 = 0;
     let arr: Vec<char> = pattern.chars().collect();
     let ncols: usize = arr.len() / nrows;
-    let mut is_match: bool = true;
+    let mut n_mismatch: i32 = 0;
 
     for reflect_row in 1..nrows {
         let max_offset = min(reflect_row, nrows - reflect_row);
@@ -54,14 +77,16 @@ fn find_reflections(pattern: &str, nrows: usize) -> i32 {
                 let idx_2 = (reflect_row + offset_row - 1) * ncols + col;
                 //println!("Checking reflect_row {reflect_row} offset_row {offset_row} col {col} idx1 {idx_1} idx2 {idx_2} nrows {nrows} ncols {ncols}");
                 if arr[idx_1] != arr[idx_2] {
-                    is_match = false;
-                    break 'row_offsets;
+                    n_mismatch += 1;
+                }
+                if n_mismatch > target_diff {
+                    break 'row_offsets
                 }
             }
         }
-        if is_match {println!("Found reflection on row {reflect_row}");}
-        if is_match {ans += 100 * reflect_row as i32;}
-        is_match = true;
+        if n_mismatch == target_diff {println!("Found reflection on row {reflect_row}");}
+        if n_mismatch == target_diff {ans += 100 * reflect_row as i32;}
+        n_mismatch = 0;
     }
 
     for reflect_col in 1..ncols {
@@ -72,14 +97,16 @@ fn find_reflections(pattern: &str, nrows: usize) -> i32 {
                 let idx_2 = row * ncols + (reflect_col + offset_col - 1);
                 //println!("Checking reflect_row {reflect_row} offset_row {offset_row} col {col} idx1 {idx_1} idx2 {idx_2} nrows {nrows} ncols {ncols}");
                 if arr[idx_1] != arr[idx_2] {
-                    is_match = false;
+                    n_mismatch += 1;
+                }
+                if n_mismatch > target_diff {
                     break 'col_offsets;
                 }
             }
         }
-        if is_match {println!("Found reflection on col {reflect_col}");}
-        if is_match {ans += reflect_col as i32;}
-        is_match = true;
+        if n_mismatch == target_diff {println!("Found reflection on col {reflect_col}");}
+        if n_mismatch == target_diff {ans += reflect_col as i32;}
+        n_mismatch = 0;
     }
 
     ans
