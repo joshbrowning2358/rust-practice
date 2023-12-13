@@ -62,7 +62,7 @@ fn puzzle12b(file_path: &str) -> i64 {
                 //println!("Found {new_val} possibilities for row {ip}");
                 ans += new_val;
                 row_cnt += 1;
-                if row_cnt % 2 == 0 {println!("Finished row {row_cnt}!");}
+                if row_cnt % 25 == 0 {println!("Finished row {row_cnt}!");}
             }
         }
     }
@@ -70,6 +70,7 @@ fn puzzle12b(file_path: &str) -> i64 {
 }
 
 fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
+    //println!("Checking line {row} with counts {:?}", cnts);
     let mut ans = 0;
     let mut contains_question: bool = false;
 
@@ -95,28 +96,30 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
     if (current_cnt > 0) & (!contains_question) {
         obs_cnts.push(current_cnt);
     }
-    //println!("Checking {row}, obs_cnts: {:?}, cnts: {:?}", obs_cnts, cnts);
 
-    //println!("Found {:?} for observed, have {:?} for expected", obs_cnts, cnts);
     if obs_cnts.len() > cnts.len() {
         return 0
-    } else if (obs_cnts.len() < cnts.len()) & contains_question {
-        // Don't branch if invalid
-        if obs_cnts != &cnts[..obs_cnts.len()] {
+    } else if obs_cnts != &cnts[..obs_cnts.len()] {  // Doesn't match required so far
+        return 0
+    } else if !contains_question {
+        if obs_cnts == cnts {
+            return 1
+        } else {
             return 0
         }
-        if (current_cnt > 0) & (cnts.len() > obs_cnts.len()) {
-            if cnts[obs_cnts.len()] < current_cnt {
-                return 0
-            }
-        }
-
+    } else if (obs_cnts.len() < cnts.len()) & contains_question {
         let idx = row.find('?').unwrap();
 
         // Current streak is current_cnt
         let streak = current_cnt as usize;
         //println!("Counts are {:?} and obs_cnts are {:?}, current is {current_cnt}", cnts, obs_cnts);
         let next_cnt = cnts[obs_cnts.len()] as usize;
+        if next_cnt == streak { // ? must be a .
+            return get_possibilities(
+                row.clone()[(idx + 1)..].to_string(),
+                cnts[(obs_cnts.len() + 1)..].to_vec()
+            );
+        }
 
         // Can we fit a #### in the current position?
         let mut fits: bool = true;
@@ -153,16 +156,27 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
                 repl_str.push_str(".");
             }
             new_row.replace_range(idx..(idx + repl_str.len()), &repl_str);
-            ans += get_possibilities(new_row, cnts.clone());
+            //println!("Replacing with #, orig_row {}, new_row {} new cnts {:?}", new_row, new_row[(idx + repl_str.len())..].to_string(), cnts[(obs_cnts.len() + 1)..].to_vec());
+            ans += get_possibilities(
+                new_row[(idx + repl_str.len())..].to_string(),
+                cnts[(obs_cnts.len() + 1)..].to_vec()
+            );
         }
-        row.replace_range(idx..(idx + 1), ".");
-        ans += get_possibilities(row.clone(), cnts.clone());
-    } else if !contains_question { // obs_cnts.len() == cnts.len() so only validate no ? left
-        if obs_cnts == cnts {
-            //println!("Success!");
-            return 1
+        let mut new_row = row.clone();
+        new_row.replace_range(idx..(idx + 1), ".");
+        if current_cnt > 0 {
+            if current_cnt == cnts[obs_cnts.len()] {
+                //println!("Replacing with a ., new_row {}, cnts {:?}", new_row[(idx + 1)..].to_string(), cnts[(obs_cnts.len() + 1)..].to_vec());
+                ans += get_possibilities(
+                    new_row[(idx + 1)..].to_string(),
+                    cnts[(obs_cnts.len() + 1)..].to_vec()
+                );
+            }
         } else {
-            return 0
+            ans += get_possibilities(
+                new_row[(idx + 1)..].to_string(),
+                cnts[obs_cnts.len()..].to_vec()
+            );
         }
     } else { // Still contains ? but obs_cnts.len() == cnts.len().  If we have ##..#.??? this could work, for example, but not ##..#.?#?
         if (current_cnt > 0) | (obs_cnts != cnts) {
@@ -176,7 +190,7 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
                 None => break
             };
         }
-        //println!("Success!  obs_cnts {:?} cnt {:?}", obs_cnts, cnts);
+        //println!("Success!  obs_cnts {:?} cnt {:?}\n", obs_cnts, cnts);
         return 1
     }
     ans
