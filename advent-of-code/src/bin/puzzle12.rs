@@ -8,10 +8,31 @@ fn main() {
     let file_path = "data/puzzle12/input.txt";
     //let file_path = "data/puzzle12/hard.txt";
 
-    let mut ans = puzzle12a(file_path);
+    let ans = puzzle12a(file_path);
     println!("Answer to puzzle 12a is {ans};");
 
-    ans = puzzle12b(file_path);
+    // Hard row: ?###???????? 3, 2, 1
+
+    //let row = String::from("..??#??????..??#");
+    //let cnts: Vec<i32> = vec![8, 2];
+    //let row = String::from("?###????????");
+    //let cnts: Vec<i32> = vec![3, 2, 1];
+    //let ans = get_possibilities2(row, &cnts);
+    //println!("Answer to simple example is {ans}");
+    //let row = String::from("?###??????????###????????");
+    //let cnts: Vec<i32> = vec![3, 2, 1, 3, 2, 1];
+    //let ans = get_possibilities2(row, &cnts);
+    //println!("Answer to simple example is {ans}");
+    //let row = String::from("?###??????????###??????????###????????");
+    //let cnts: Vec<i32> = vec![3, 2, 1, 3, 2, 1, 3, 2, 1];
+    //let ans = get_possibilities2(row, &cnts);
+    //println!("Answer to simple example is {ans}");
+    //let row = String::from("?###??????????###??????????###??????????###??????????###????????");
+    //let cnts: Vec<i32> = vec![3, 2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1];
+    //let ans = get_possibilities2(row, &cnts);
+    //println!("Answer to simple example is {ans}");
+
+    let ans = puzzle12b(file_path);
     println!("Answer to puzzle 12b is {ans};");
 }
 
@@ -58,15 +79,84 @@ fn puzzle12b(file_path: &str) -> i64 {
                 //counts = counts.iter().cycle().take(counts.len() * 5).collect();
                 //println!("\n\nMissing is {missing}, counts is {:?}\n\n", counts);
 
-                let new_val = get_possibilities(missing, counts);
+                let new_val = get_possibilities2(missing, &counts);
                 //println!("Found {new_val} possibilities for row {ip}");
                 ans += new_val;
                 row_cnt += 1;
-                if row_cnt % 25 == 0 {println!("Finished row {row_cnt}!");}
+                if row_cnt % 5 == 0 {println!("Finished row {row_cnt}!");}
             }
         }
     }
     ans
+}
+
+fn get_possibilities2(mut row: String, cnts: &Vec<i32>) -> i64 {
+    //println!("Calling get_possibilities2 with {row} and {:?}", cnts);
+    // Handle edge cases
+    if row.len() == 0 {return 0}
+    if row.len() < (cnts.iter().sum::<i32>() as usize) {return 0}
+    if cnts.len() == 0 {
+        if row.contains("#") {return 0}
+        return 1
+    }
+
+    let mut ans: i64 = 0;
+    row = simplify_row(&row, &cnts);
+    if !row.contains("?") {
+        //println!("No ? (row is >{row}< and cnts {:?}), evaluating!", cnts);
+        let obs_cnts = get_counts_in_known_str(&row);
+        if obs_cnts == *cnts {
+            return 1
+        } else {
+            return 0
+        }
+    } else if row.contains('.') {
+        //println!("Splitting on . in row >{row}< and cnts {:?}", cnts);
+        let (left, right) = row.split_once('.').unwrap();
+        for i in 0..(cnts.len() + 1) {
+            let left_ans = get_possibilities2(left.to_string(), &(cnts[..i].to_vec()));
+            if left_ans > 0 {
+                let right_ans = get_possibilities2(right.to_string(), &(cnts[i..].to_vec()));
+                ans += left_ans * right_ans;
+            }
+        }
+        return ans
+    } else {
+        //println!("No . in row but ? (row is >{row}<), splitting left/right");
+        let idx = row.find('?').unwrap();
+        let mut left = row.clone();
+        left.replace_range(idx..(idx + 1), &".");
+        let mut right = row.clone();
+        right.replace_range(idx..(idx + 1), &"#");
+        return get_possibilities2(left.to_string(), &cnts) + get_possibilities2(right.to_string(), &cnts)
+    }
+}
+
+fn simplify_row(row: &str, cnts: &Vec<i32>) -> String {
+    // Remove any .'s from start or end as they don't help us fit in cnts
+    let mut row = row.trim_matches('.').to_string();
+
+    if cnts.len() == 0 {return row.to_string()}
+    if row.len() < (cnts[0] as usize) {return "".to_string()}
+
+    // Use logic to see if we can replace some ?'s with #'s
+    let first_pound = match row.find('#') {
+        Some(x) => {x},
+        None => {1000}
+    };
+    
+    let cnt: usize = cnts[0] as usize;
+    if first_pound < cnt {
+        // chars from first_pound to cnts[0] must all be #'s
+        if row[first_pound..cnt].contains('.') {
+            return "".to_string()  // Doesn't fit, this isn't valid.  Empty string should give 0 options later.
+        } else {
+            let replace_str = "#".repeat(cnt - first_pound);
+            row.replace_range(first_pound..cnt, &replace_str);
+        }
+    }
+
+    row.to_string()
 }
 
 fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
@@ -194,6 +284,25 @@ fn get_possibilities(mut row: String, cnts: Vec<i32>) -> i64 {
         return 1
     }
     ans
+}
+
+fn get_counts_in_known_str(row: &str) -> Vec<i32> {
+    let mut obs_cnts: Vec<i32> = vec![];
+    let mut current_cnt = 0;
+    for c in row.chars() {
+        if c == '#' {
+            current_cnt += 1;
+        } else if c == '?' {
+            panic!("Called get_counts_in_known_str with {row} and found '?'");
+        } else if current_cnt > 0 {
+            obs_cnts.push(current_cnt);
+            current_cnt = 0;
+        }
+    }
+    if current_cnt > 0 {
+        obs_cnts.push(current_cnt);
+    }
+    obs_cnts
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

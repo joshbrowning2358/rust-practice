@@ -6,10 +6,10 @@ fn main() {
     let file_path = "data/puzzle/example.txt";
     //let file_path = "data/puzzle/input.txt";
 
-    let mut ans = part_a(file_path);
+    let ans = part_a(file_path);
     println!("Answer to puzzle A is {ans};");
 
-    ans = part_b(file_path);
+    let ans = part_b(file_path);
     println!("Answer to puzzle B is {ans};");
 }
 
