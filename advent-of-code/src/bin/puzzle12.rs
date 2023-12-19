@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+use memoize::memoize;
+
 fn main() {
     //let file_path = "data/puzzle12/easy.txt";
     //let file_path = "data/puzzle12/example.txt";
@@ -90,6 +92,7 @@ fn puzzle12b(file_path: &str) -> i64 {
     ans
 }
 
+#[memoize]
 fn get_possibilities2(mut row: String, cnts: &Vec<i32>) -> i64 {
     //println!("Calling get_possibilities2 with {row} and {:?}", cnts);
     // Handle edge cases

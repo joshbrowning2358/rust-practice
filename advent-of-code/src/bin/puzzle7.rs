@@ -1,13 +1,11 @@
-use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
+
+use itertools::Itertools;
 
 fn main() {
-    //let file_path = "./data/puzzle7/input.txt";
-    let file_path = "./data/puzzle7/example.txt";
+    let file_path = "./data/puzzle7/input.txt";
+    //let file_path = "./data/puzzle7/example.txt";
     //let file_path = "./data/puzzle7/hard.txt";
     let ans = puzzle7a(&file_path);
     println!("First answer is {ans}!\n");
@@ -27,18 +25,12 @@ fn puzzle7a(file_path: &str) -> i32 {
 
     let contents = fs::read_to_string(file_path)
         .expect("Should have been able to read the file");
-    println!("\n {contents}");
-
 
     let mut char_sorter: HashMap<char, i32> = HashMap::new();
 
     for line in contents.split('\n') {
         if line.len() > 5 {
-                let (cards, bid) = match line.split_once(' ') {
-                    Some((x, y)) => {(x, y)},
-                    None => {panic!("Unable to parse hand/bid!")}
-                };
-                println!("Parsed cards {cards} and bid {bid}");
+                let (cards, bid) = line.split_once(' ').unwrap();
                 for card in cards.chars() {
                     if char_sorter.contains_key(&card) {
                         *char_sorter.get_mut(&card).unwrap() += 1;
@@ -46,7 +38,6 @@ fn puzzle7a(file_path: &str) -> i32 {
                         char_sorter.insert(card, 1);
                     }
                 }
-                five_kind.insert(cards, 1);
                 
                 // Sort sizes, determine hand type
                 let mut biggest: i32 = 0;
@@ -85,41 +76,129 @@ fn puzzle7a(file_path: &str) -> i32 {
 
         }
     }
-    //for k in five_kind.keys().sort_by(|a, b| sorter_map(a).cmp(sorter_map(&b)) {
-    //    println!("Key is {k}");
-    //}
 
-    for (k, v) in three_kind.iter().sorted_by(|a, b| sorter_map(a.to_string()).cmp(&sorter_map(b.to_string()))) {
-        println!("{k} and {v}");
-    }
-
-    let ans = 0;
-    ans
-}
-
-fn puzzle7b(file_path: &str) -> i64 {
-    0
-}
-
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}
-
-fn sorter_map(s: String) {
-    for i in 0..s.len() {
-        let c = s.remove(i);
-        if c == 'A' {
-            s.insert(i, 'Z');
-        } else if c == 'K' {
-            s.insert(i, 'Y');
-        } else if c == 'T' {
-            s.insert(i, 'A');
-        } else {
-            s.insert(i, c);
+    let mut total_rank: i32 = 0;
+    let mut hand_idx: i32 = 1;
+    for hands in [high_card, pair, two_pair, three_kind, full_house, four_kind, five_kind] {
+        let mut fixed: HashMap<String, i32> = HashMap::new();
+        for k in hands.keys() {
+            let new_key = sorter_map(k, false);
+            fixed.insert(new_key, *hands.get(k).unwrap());
+        }
+        //println!("Fixed is {:?}", fixed);
+        for (_k, v) in fixed.iter().sorted() {
+            //println!("Inserting score of {} for hand {k}", v * hand_idx);
+            total_rank += v * hand_idx;
+            hand_idx += 1;
         }
     }
+
+    total_rank
+}
+
+fn puzzle7b(file_path: &str) -> i32 {
+    let mut five_kind: HashMap<&str, i32> = HashMap::new();
+    let mut four_kind: HashMap<&str, i32> = HashMap::new();
+    let mut three_kind: HashMap<&str, i32> = HashMap::new();
+    let mut pair: HashMap<&str, i32> = HashMap::new();
+    let mut two_pair: HashMap<&str, i32> = HashMap::new();
+    let mut full_house: HashMap<&str, i32> = HashMap::new();
+    let mut high_card: HashMap<&str, i32> = HashMap::new();
+
+    let contents = fs::read_to_string(file_path)
+        .expect("Should have been able to read the file");
+
+    let mut char_sorter: HashMap<char, i32> = HashMap::new();
+
+    for line in contents.split('\n') {
+        if line.len() > 5 {
+            let mut num_js = 0;
+            let (cards, bid) = line.split_once(' ').unwrap();
+            for card in cards.chars() {
+                if card == 'J' {
+                    num_js += 1;
+                    continue
+                }
+
+                if char_sorter.contains_key(&card) {
+                    *char_sorter.get_mut(&card).unwrap() += 1;
+                } else {
+                    char_sorter.insert(card, 1);
+                }
+            }
+
+            // Sort sizes, determine hand type
+            let mut biggest: i32 = 0;
+            let mut second: i32 = 0;
+            for (_unused, cnt) in char_sorter.iter() {
+                if cnt > &biggest {
+                    second = biggest;
+                    biggest = *cnt;
+                } else if cnt > &second {
+                    second = *cnt
+                }
+            }
+            biggest += num_js;
+
+            match biggest {
+                5 => {five_kind.insert(cards, bid.parse::<i32>().unwrap());}
+                4 => {four_kind.insert(cards, bid.parse::<i32>().unwrap());}
+                3 => {
+                    if second == 2 {
+                        full_house.insert(cards, bid.parse::<i32>().unwrap());
+                    } else {
+                        three_kind.insert(cards, bid.parse::<i32>().unwrap());
+                    }
+                }
+                2 => {
+                    if second == 2 {
+                        two_pair.insert(cards, bid.parse::<i32>().unwrap());
+                    } else {
+                        pair.insert(cards, bid.parse::<i32>().unwrap());
+                    }
+                }
+                1 => {high_card.insert(cards, bid.parse::<i32>().unwrap());}
+                _ => {panic!("This shouldn't happen!");}
+            };
+
+            char_sorter.clear();
+        }
+    }
+
+    let mut total_rank: i32 = 0;
+    let mut hand_idx: i32 = 1;
+    for hands in [high_card, pair, two_pair, three_kind, full_house, four_kind, five_kind] {
+        let mut fixed: HashMap<String, i32> = HashMap::new();
+        for k in hands.keys() {
+            let new_key = sorter_map(k, true);
+            fixed.insert(new_key, *hands.get(k).unwrap());
+        }
+        println!("Fixed is {:?}", fixed);
+        for (k, v) in fixed.iter().sorted() {
+            println!("Inserting score of {} for hand {k}", v * hand_idx);
+            total_rank += v * hand_idx;
+            hand_idx += 1;
+        }
+    }
+
+    total_rank
+}
+
+fn sorter_map(s: &str, map_j: bool) -> String {
+    let card_string = s.to_string();
+    let mut new_string = String::new();
+    for c in card_string.chars() {
+        if c == 'A' {
+            new_string.push_str(&'Z'.to_string());
+        } else if c == 'K' {
+            new_string.push_str(&'Y'.to_string());
+        } else if c == 'T' {
+            new_string.push_str(&'A'.to_string());
+        } else if map_j & (c == 'J') {
+            new_string.push_str(&'1'.to_string());
+        } else {
+            new_string.push_str(&c.to_string());
+        }
+    }
+    new_string
 }
