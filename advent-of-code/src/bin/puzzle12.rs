@@ -6,8 +6,8 @@ use memoize::memoize;
 
 fn main() {
     //let file_path = "data/puzzle12/easy.txt";
-    //let file_path = "data/puzzle12/example.txt";
-    let file_path = "data/puzzle12/input.txt";
+    let file_path = "data/puzzle12/example.txt";
+    //let file_path = "data/puzzle12/input.txt";
     //let file_path = "data/puzzle12/hard.txt";
 
     let ans = puzzle12a(file_path);
@@ -81,7 +81,7 @@ fn puzzle12b(file_path: &str) -> i64 {
                 //counts = counts.iter().cycle().take(counts.len() * 5).collect();
                 //println!("\n\nMissing is {missing}, counts is {:?}\n\n", counts);
 
-                let new_val = get_possibilities2(missing, &counts);
+                let new_val = get_possibilities2(missing, counts);
                 //println!("Found {new_val} possibilities for row {ip}");
                 ans += new_val;
                 row_cnt += 1;
@@ -93,7 +93,7 @@ fn puzzle12b(file_path: &str) -> i64 {
 }
 
 #[memoize]
-fn get_possibilities2(mut row: String, cnts: &Vec<i32>) -> i64 {
+fn get_possibilities2(mut row: String, cnts: Vec<i32>) -> i64 {
     //println!("Calling get_possibilities2 with {row} and {:?}", cnts);
     // Handle edge cases
     if row.len() == 0 {return 0}
@@ -117,9 +117,9 @@ fn get_possibilities2(mut row: String, cnts: &Vec<i32>) -> i64 {
         //println!("Splitting on . in row >{row}< and cnts {:?}", cnts);
         let (left, right) = row.split_once('.').unwrap();
         for i in 0..(cnts.len() + 1) {
-            let left_ans = get_possibilities2(left.to_string(), &(cnts[..i].to_vec()));
+            let left_ans = get_possibilities2(left.to_string(), cnts[..i].to_vec());
             if left_ans > 0 {
-                let right_ans = get_possibilities2(right.to_string(), &(cnts[i..].to_vec()));
+                let right_ans = get_possibilities2(right.to_string(), cnts[i..].to_vec());
                 ans += left_ans * right_ans;
             }
         }
@@ -131,7 +131,7 @@ fn get_possibilities2(mut row: String, cnts: &Vec<i32>) -> i64 {
         left.replace_range(idx..(idx + 1), &".");
         let mut right = row.clone();
         right.replace_range(idx..(idx + 1), &"#");
-        return get_possibilities2(left.to_string(), &cnts) + get_possibilities2(right.to_string(), &cnts)
+        return get_possibilities2(left.to_string(), cnts.clone()) + get_possibilities2(right.to_string(), cnts)
     }
 }
 

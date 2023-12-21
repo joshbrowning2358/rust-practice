@@ -10,10 +10,12 @@ use std::io::{self, BufRead};
 use std::iter::zip;
 use std::path::Path;
 
+use num_traits::sign::signum;
+
 const HUGE_DISTANCE: i32 = 100000000;
 const RADIX: u32 = 10;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Node {
     position: [i32; 2],
     direction: [i32; 2],
@@ -51,6 +53,7 @@ impl Hash for Node {
 
 fn main() {
     //let file_path = "data/puzzle17/example.txt";
+    //let file_path = "data/puzzle17/example2.txt";
     let file_path = "data/puzzle17/input.txt";
     //let file_path = "data/puzzle17/easy.txt";
     //let file_path = "data/puzzle17/super_easy.txt";
@@ -91,6 +94,10 @@ fn part_a(file_path: &str) -> i32 {
         }
         let Reverse((next_distance, next_node)) = to_visit.pop().unwrap();
         //println!("Now visiting {:?} with distance {next_distance} and properties streak={} direction={:?}", next_node.position, next_node.streak, next_node.direction);
+        //println!("Now visiting {:?} with distance {next_distance}", next_node);
+
+        // Attempt to prune: if we can get here with a shorter streak, then skip
+        // TODO
 
         let curr_distance = match shortest_path.get(&next_node) {
             Some(x) => {
@@ -104,6 +111,8 @@ fn part_a(file_path: &str) -> i32 {
 
         if next_distance < curr_distance {
             shortest_path.insert(next_node, next_distance); // Update distance with new best
+        } else {
+            continue;
         }
 
         // Visit node and update distances
@@ -134,26 +143,104 @@ fn part_a(file_path: &str) -> i32 {
         }
         visited.insert(next_node);
         iter_counter += 1;
-        if visited.len() % 1000 == 0 {
-            println!("Visited {} nodes!", visited.len());
-        }
-        //if iter_counter > 100 {
-        //    break
-        //}
     }
 
     ans
 }
 
 fn part_b(file_path: &str) -> i32 {
-    let mut ans: i32 = 0;
+    let mut grid_str = String::new();
+    let mut nrows: usize = 0;
 
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
             if let Ok(ip) = line {
+                grid_str.push_str(&ip.to_string());
+                nrows += 1;
             }
         }
     }
+    let grid: Vec<i32> = grid_str.chars().map(|x| x.to_digit(RADIX).unwrap() as i32).collect();
+    let ncols: usize = grid.len() / nrows;
+    let mut shortest_path: HashMap<Node, i32> = HashMap::new();
+    let mut to_visit = BinaryHeap::new();
+    let mut visited: HashSet<Node> = HashSet::new();
+    to_visit.push(Reverse((0, Node{position: [0, 0], direction: [0, 0], streak: 0})));
+    let mut ans = HUGE_DISTANCE;
+    let mut iter_counter = 0;
+
+    // Get next node to visit
+    loop {
+        if to_visit.len() == 0 {
+            println!("Exhausted all search options, done!");
+            break
+        }
+        let Reverse((next_distance, next_node)) = to_visit.pop().unwrap();
+        //println!("Now visiting {:?} with distance {next_distance} and properties streak={} direction={:?}", next_node.position, next_node.streak, next_node.direction);
+        //println!("Now visiting {:?} with distance {next_distance}", next_node);
+
+        // Attempt to prune: if we can get here with a shorter streak, then skip
+        // TODO
+
+        let curr_distance = match shortest_path.get(&next_node) {
+            Some(x) => {
+                if x > &ans {
+                    break;  // Found a path to destination that's closer than the smallest remaining distance
+                }
+                *x
+            },
+            None => {HUGE_DISTANCE}
+        };
+
+        if next_distance < curr_distance {
+            shortest_path.insert(next_node, next_distance); // Update distance with new best
+        } else {
+            continue;
+        }
+
+        // Visit node and update distances
+        for (mut row_step, mut col_step) in zip([-1, 1, 0, 0], [0, 0, -1, 1]) {
+            if ((row_step == -1 * next_node.direction[0]) & (row_step != 0)) | ((col_step == -1 * next_node.direction[1]) & (col_step != 0)) {
+                continue // Can't reverse the crucible back the way it came
+            }
+            let mut current_streak = 1;
+            let mut dist_adj = 0;
+            if next_node.direction == [row_step, col_step] {
+                current_streak = next_node.streak + 1;
+            }
+            if current_streak < 4 {
+                for i in current_streak..4 {
+                    let next_pos = [next_node.position[0] + row_step * i, next_node.position[1] + col_step * i];
+                    if (next_pos[0] < 0) | (next_pos[0] >= nrows as i32) | (next_pos[1] < 0) | (next_pos[1] >= ncols as i32) {
+                        continue
+                    }
+                    dist_adj += grid[(next_pos[0] as usize) * ncols + (next_pos[1]) as usize];
+                }
+                row_step *= 4 - current_streak + 1;
+                col_step *= 4 - current_streak + 1;
+                current_streak = 4;
+            }
+            let next_pos = [next_node.position[0] + row_step, next_node.position[1] + col_step];
+            if (next_pos[0] < 0) | (next_pos[0] >= nrows as i32) | (next_pos[1] < 0) | (next_pos[1] >= ncols as i32) {
+                continue
+            }
+            if current_streak < 11 {
+                //println!("Using index {} using {}x{nrows} + {}", (next_pos[0] as usize) * ncols + (next_pos[1] as usize), next_pos[0], next_pos[1]);
+                let new_distance = &(grid[(next_pos[0] as usize) * ncols + (next_pos[1] as usize)] + next_distance + dist_adj);
+                //println!("Current node {:?}|{}, adding {:?}|{}", next_node.position, next_distance, next_pos, new_distance);
+                let new_node = Node{position: next_pos, direction: [signum(row_step), signum(col_step)], streak: current_streak};
+                if !visited.contains(&new_node) {
+                    to_visit.push(Reverse((*new_distance, new_node)));
+                }
+                if next_pos == [(nrows - 1) as i32, (ncols - 1) as i32] {
+                    ans = min(ans, *new_distance);
+                }
+            }
+        }
+        visited.insert(next_node);
+        iter_counter += 1;
+    }
+
     ans
 }
 
