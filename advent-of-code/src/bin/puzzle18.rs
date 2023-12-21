@@ -12,11 +12,11 @@ use std::path::Path;
 use num::abs;
 
 fn main() {
-    let file_path = "data/puzzle18/example.txt"; let interior = [1, 1];
-    //let file_path = "data/puzzle18/input.txt"; let interior = [1, 1];
+    //let file_path = "data/puzzle18/example.txt"; let interior = [1, 1];
+    let file_path = "data/puzzle18/input.txt"; let interior = [1, 1];
 
-    let ans = part_a(file_path, interior);
-    println!("Answer to puzzle A is {ans};");
+    //let ans = part_a(file_path, interior);
+    //println!("Answer to puzzle A is {ans};");
 
     let ans = part_b(file_path);
     println!("Answer to puzzle B is {ans};");
@@ -35,9 +35,9 @@ fn main() {
     distances.push_back(7);
     distances.push_back(5);
     distances.push_back(10);
-    let ans = get_column_locations(&directions, &distances);
-    println!("Answer is {:?}", ans);
-    println!("Area is {}", compute_area(ans));
+    //let ans = get_column_locations(&directions, &distances);
+    //println!("Answer is {:?}", ans);
+    //println!("Area is {}", compute_area(ans));
 }
 
 fn part_a(file_path: &str, _interior: [i32; 2]) -> i64 {
@@ -60,10 +60,6 @@ fn part_a(file_path: &str, _interior: [i32; 2]) -> i64 {
             }
         }
     }
-    //println!("Found directions {:?} and distances {:?}", directions, distances);
-
-    //let visited = get_path(&directions, &distances);
-    //println!("Visited nodes {} are {:?}", visited.len(), visited);
 
     //floodfill(&visited, interior) + (visited.len() as i32)
     let col_locs = get_column_locations(&directions, &distances);
@@ -91,7 +87,6 @@ fn part_b(file_path: &str) -> i64 {
             }
         }
     }
-    println!("Found directions {:?} and distances {:?}\n\n", directions, distances);
 
     let col_locs = get_column_locations(&directions, &distances);
     println!("\n\nFound col_locs {:?}", col_locs);
@@ -157,11 +152,10 @@ fn compute_area(cols: HashMap<[i32; 2], Vec<i32>>) -> i64 {
         if height > 0 {
             for pair_idx in 0..(col_list.len() / 2) {
                 ans += height * ((1 + col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64);
-                println!("Adding {}", height * ((1 + col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64));
+                //println!("Adding {}", height * ((1 + col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64));
             }
         }
     }
-    return ans;
 
     // Have to adjust for trenches along keys
     let mut keys: Vec<[i32; 2]> = cols.clone().into_iter().map(|(key, _value)| key).collect();
@@ -178,7 +172,7 @@ fn compute_area(cols: HashMap<[i32; 2], Vec<i32>>) -> i64 {
             cols_list.sort();
             next_cols = VecDeque::from(cols_list);
         }
-        println!("For keys {:?} and {:?} ans started at {ans}", curr_cols, next_cols);
+        println!("For rows {:?} curr_cols are {:?} and next {:?}; ans started at {ans}", keys[i], curr_cols, next_cols);
 
         while (next_cols.len() > 0) & (curr_cols.len() > 0) {
             ans += abs(next_cols.pop_front().unwrap() - curr_cols.pop_front().unwrap()) as i64;
