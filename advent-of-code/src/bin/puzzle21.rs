@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::cmp::max;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::iter::zip;
@@ -6,25 +7,14 @@ use std::path::Path;
 
 fn main() {
     //let file_path = "data/puzzle21/example.txt";
-    //let file_path = "data/puzzle21/input.txt";
-    let file_path = "data/puzzle21/easy.txt";
+    let file_path = "data/puzzle21/input.txt";
+    //let file_path = "data/puzzle21/easy.txt";
 
     let ans = part_a(file_path);
     println!("Answer to puzzle A is {ans};");
 
     let ans = part_b(file_path);
     println!("Answer to puzzle B is {ans};");
-
-    println!("Input 9, 7 {:?}", get_partial_nums(9, 7));
-    println!("Input 11, 7 {:?}", get_partial_nums(11, 7));
-    println!("Input 13, 7 {:?}", get_partial_nums(13, 7));
-    println!("Input 15, 7 {:?}", get_partial_nums(15, 7));
-    println!("Input 17, 7 {:?}", get_partial_nums(17, 7));
-    println!("Input 19, 7 {:?}", get_partial_nums(19, 7));
-    println!("Input 21, 7 {:?}", get_partial_nums(21, 7));
-    println!("Input 23, 7 {:?}", get_partial_nums(23, 7));
-    println!("Input 53, 7 {:?}", get_partial_nums(53, 7));
-    println!("Final {:?}", get_partial_nums(26501365, 131));
 }
 
 fn part_a(file_path: &str) -> i32 {
@@ -50,7 +40,7 @@ fn part_a(file_path: &str) -> i32 {
     explore_without_wrapping(s_loc, &grid, nrows as i32, ncols as i32, 6)
 }
 
-fn part_b(file_path: &str) -> i32 {
+fn part_b(file_path: &str) -> i64 {
     let mut grid_str = String::new();
     let mut nrows: i32 = 0;
     let mut s_loc: [i32; 2] = [0, 0];
@@ -68,120 +58,112 @@ fn part_b(file_path: &str) -> i32 {
     }
     let grid: Vec<char> = grid_str.chars().collect();
     let ncols: i32 = grid.len() as i32 / nrows;
-    let mut n_steps = 7;
+    let mut n_steps = 26501365i32;
+    let mut logical_ans: i64;
     loop {
 
-        let brute_ans = part_b_brute_force(s_loc, &grid, nrows, ncols, n_steps);
+        //let brute_ans = part_b_brute_force(s_loc, &grid, nrows, ncols, n_steps);
+        let brute_ans: i64 = part_b_brute_force(s_loc, &grid, nrows, ncols, 11) as i64;
         println!("Steps ({n_steps}): Brute force answer {:?}", brute_ans);
 
         // Compute with logic!
         let full_on_cross = (n_steps + 1) / ncols;
         //let full_off_cross = full_on_cross * (full_on_cross - 1) / 2;
-        let even_explored_cnt = explore_without_wrapping(s_loc, &grid, nrows, ncols, ncols + 1);
-        let odd_explored_cnt = explore_without_wrapping(s_loc, &grid, nrows, ncols, ncols);
+        let even_explored_cnt = explore_without_wrapping(s_loc, &grid, nrows, ncols, ncols + 1) as i64;
+        let odd_explored_cnt = explore_without_wrapping(s_loc, &grid, nrows, ncols, ncols) as i64;
         let mut steps = (n_steps - ncols / 2) % ncols - 1;
-        let mut partial_on_cross = explore_without_wrapping([s_loc[0], 0], &grid, nrows, ncols, steps) +  
+        let mut partial_on_cross = (explore_without_wrapping([s_loc[0], 0], &grid, nrows, ncols, steps) +  
             explore_without_wrapping([s_loc[0], nrows - 1], &grid, nrows, ncols, steps) +
             explore_without_wrapping([0, s_loc[1]], &grid, nrows, ncols, steps) +
-            explore_without_wrapping([ncols - 1, s_loc[1]], &grid, nrows, ncols, steps);
+            explore_without_wrapping([ncols - 1, s_loc[1]], &grid, nrows, ncols, steps)) as i64;
         if (n_steps - (ncols - 1)) % ncols > ncols / 2 {
             // Two partial on-cross nodes on all 4 sides!
             steps = (n_steps - ncols / 2) % (ncols as i32) + ncols as i32 - 1;
-            partial_on_cross += explore_without_wrapping([s_loc[0], 0], &grid, nrows, ncols, steps) +
+            partial_on_cross += (explore_without_wrapping([s_loc[0], 0], &grid, nrows, ncols, steps) +
                 explore_without_wrapping([s_loc[0], nrows as i32 - 1], &grid, nrows, ncols, steps) +
                 explore_without_wrapping([0, s_loc[1]], &grid, nrows, ncols, steps) +
-                explore_without_wrapping([ncols as i32 - 1, s_loc[1]], &grid, nrows, ncols, steps);
+                explore_without_wrapping([ncols as i32 - 1, s_loc[1]], &grid, nrows, ncols, steps)) as i64;
         }
-        let mut big_steps = (n_steps - 1) % ncols;
-        steps = -1;
-        if (n_steps > ncols * 2) & (n_steps % ncols != 0) {
-            steps = big_steps;
-            big_steps = big_steps + 7;
+        let mut partial_off_cross = 0i64;
+        let partial_size_counts = get_partial_nums(n_steps, ncols);
+        for partial_size_count in partial_size_counts {
+            let [mult, expl] = partial_size_count;
+            partial_off_cross += (mult as i64) * (
+                explore_without_wrapping([0, 0], &grid, nrows, ncols, expl) +
+                explore_without_wrapping([nrows - 1, 0], &grid, nrows, ncols, expl) +
+                explore_without_wrapping([0, ncols - 1], &grid, nrows, ncols, expl) +
+                explore_without_wrapping([nrows - 1, ncols - 1], &grid, nrows, ncols, expl)
+            ) as i64;
         }
-        //let mut partial_off_cross_big = explore_without_wrapping([0, 0], &grid, nrows, ncols, big_steps) +
-        //    explore_without_wrapping([nrows - 1, 0], &grid, nrows, ncols, big_steps) +
-        //    explore_without_wrapping([0, ncols - 1], &grid, nrows, ncols, big_steps) +
-        //    explore_without_wrapping([nrows - 1, ncols - 1], &grid, nrows, ncols, big_steps);
-        //partial_off_cross_big *= ((n_steps - ncols - 1) as f32 / ((2 * ncols) as f32)).ceil() as i32;
-        //let mut partial_off_cross_small = explore_without_wrapping([0, 0], &grid, nrows, ncols, steps) +
-        //    explore_without_wrapping([nrows - 1, 0], &grid, nrows, ncols, steps) +
-        //    explore_without_wrapping([0, ncols - 1], &grid, nrows, ncols, steps) +
-        //    explore_without_wrapping([nrows - 1, ncols - 1], &grid, nrows, ncols, steps);
-        //partial_off_cross_small *= full_on_cross;
-        let full_even_nodes = 1 + (full_on_cross - 1).div_euclid(2) * 4 + even_off_cross_nodes(full_on_cross) * 4;
-        let full_odd_nodes = full_on_cross.div_euclid(2) * 4 + odd_off_cross_nodes(full_on_cross) * 4;
-        let logical_ans = full_even_nodes * odd_explored_cnt +
+        let full_even_nodes = 1 + max(0, ((full_on_cross - 1) as f32 / 2f32).floor() as i64) * 4 + even_off_cross_nodes(full_on_cross as i64) * 4;
+        let full_odd_nodes = ((full_on_cross as f32) / 2f32).floor() as i64 * 4 + odd_off_cross_nodes(full_on_cross as i64) * 4;
+        logical_ans = full_even_nodes * odd_explored_cnt +
             full_odd_nodes * even_explored_cnt +
             partial_on_cross + 
-            partial_off_cross_big + 
-            partial_off_cross_small
+            partial_off_cross
         ;
         println!("Steps ({n_steps}): Logical approach: {logical_ans}");
 
         if logical_ans != brute_ans {
             println!("full_on_cross: {full_on_cross}");
             println!("partial_on_cross: {partial_on_cross}");
-            println!("partial_off_cross_big: {partial_off_cross_big}");
-            println!("partial_off_cross_small: {partial_off_cross_small}");
-            println!("Full even nodes {full_even_nodes} and off-cross {}", even_off_cross_nodes(full_on_cross) * 4);
-            println!("Full odd nodes {full_odd_nodes} and off-cross {}", odd_off_cross_nodes(full_on_cross) * 4);
+            println!("partial_off_cross: {partial_off_cross}");
+            println!("Full even nodes {full_even_nodes} and off-cross {}", even_off_cross_nodes(full_on_cross as i64) * 4);
+            println!("Full odd nodes {full_odd_nodes} and off-cross {}", odd_off_cross_nodes(full_on_cross as i64) * 4);
             break;
         }
-        n_steps += 2;
+        n_steps += 200;
     }
-    0
+    logical_ans
 }
 
-fn even_off_cross_nodes(full_on_cross: i32) -> i32 {
-    let mut factor;
+fn even_off_cross_nodes(full_on_cross: i64) -> i64 {
+    let mut factor: i64;
     if full_on_cross % 2 == 1 {
         factor = full_on_cross - 2
     } else {
         factor = full_on_cross - 3
     }
     if factor <= 0 {return 0}
-    let mut ans = 1;
+    let mut ans = 0i64;
     while factor > 0 {
-        ans *= factor;
+        ans += factor;
         factor -= 2;
     }
     ans
 }
 
-fn odd_off_cross_nodes(full_on_cross: i32) -> i32 {
-    let base = (full_on_cross - 2).div_euclid(2);
-    if base <= 0 {return 0}
-    2 * base * (base + 1) / 2 * 4
+fn odd_off_cross_nodes(full_on_cross: i64) -> i64 {
+    let mut factor: i64;
+    if full_on_cross % 2 == 0 {
+        factor = full_on_cross - 2
+    } else {
+        factor = full_on_cross - 3
+    }
+    if factor <= 0 {return 0}
+    let mut ans = 0i64;
+    while factor > 0 {
+        ans += factor;
+        factor -= 2;
+    }
+    ans
 }
 
 fn get_partial_nums(n_steps: i32, ncols: i32) -> Vec<[i32; 2]> {
     // Returns a vector of pairs of i32 elements.  Each pair represents the [# of partial nodes, how far to explore]
     let mut out: Vec<[i32; 2]> = Vec::new();
-    let mut n_steps = n_steps - ncols - 1;  // Traverse to (0, 0) in adjacent garden
+    let n_steps = n_steps - ncols - 1;  // Traverse to (0, 0) in adjacent garden
     
-    //let mut n_grids = ((n_steps - ncols) as f32 / ncols as f32).ceil() as i32 + 1;
-    //out.push([4 * n_grids, n_steps % (ncols * 2)]);
-
-    //if n_steps % (ncols * 2) >= ncols {
-    //    n_grids = ((n_steps - (ncols - 1)) as f32 / ncols as f32).ceil() as i32;
-    //    out.push([4 * (n_grids + 1), n_steps % (ncols * 2) - ncols]);
-    //}
     let mut offset_idx = (n_steps - ncols) / (2 * ncols);
     loop {
         if n_steps < (ncols * (offset_idx + 1) + offset_idx - 1) {
-            if n_steps - ncols * (offset_idx - 1) < ncols * 2 {
+            if n_steps - ncols * (offset_idx - 1) < (ncols - 1) * 2 {
                 out.push([offset_idx, n_steps - ncols * (offset_idx - 1)]);
             }
         }
         if n_steps < offset_idx * ncols {break;}
         offset_idx += 1;
     }
-    //if (n_steps < (ncols * 3 + 1)) & (n_steps >= ncols) {
-    //    out.push([2, n_steps - ncols]);
-    //}
-    //if (n_steps < (ncols * 4 + 2)) & (n_steps >= ncols * 2) {
-    //    out.push([3, n_steps - ncols * 2]);
-    //}
     return out
 }
 
