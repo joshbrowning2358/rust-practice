@@ -75,18 +75,21 @@ fn drop_bricks(bricks: &Vec<Brick>) -> Vec<Brick> {
     for brick in bricks {
         let mut max_height = 1;
         let mut support: Vec<i32> = Vec::new();
-        for pt in brick.pts {
+        for pt in &brick.pts {
             for (dropped_idx, dropped_brick) in dropped_bricks.iter().enumerate() {
-                for dropped_pt in dropped_brick.pts {
-                    if (pt.x == dropped_pt.x) & (pt.y == dropped_pt.y) {
+                for dropped_pt in &dropped_brick.pts {
+                    if (pt[0] == dropped_pt[0]) & (pt[0] == dropped_pt[0]) {
                         // Potentially caught by brick!  Check heights
-                        if dropped_pt.z > max_height - 1 {
-                            max_height = dropped_pt.z + 1;
-                            support = vec![dropped_idx];
-                        } else if dropped_pt.z == max_height - 1 {
-                            support.push(dropped_idx);
+                        if dropped_pt[2] > max_height - 1 {
+                            max_height = dropped_pt[2] + 1;
+                            support = vec![dropped_idx as i32; 1];
+                        } else if dropped_pt[2] == max_height - 1 {
+                            support.push(dropped_idx as i32);
                         }
-            max_height = max(height[pt[0] * ncols + pt[1]], max_height);
+                    // TODO: Continue from here!
+                    }
+                }
+            }
         }
     }
 
