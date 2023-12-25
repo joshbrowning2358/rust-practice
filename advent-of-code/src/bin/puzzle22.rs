@@ -6,10 +6,10 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
-    let file_path = "data/puzzle22/example.txt";
+    //let file_path = "data/puzzle22/example.txt";
     //let file_path = "data/puzzle22/example2.txt";
     //let file_path = "data/puzzle22/edge_case2.txt";
-    //let file_path = "data/puzzle22/input.txt";
+    let file_path = "data/puzzle22/input.txt";
 
     let ans = part_a(file_path);
     println!("Answer to puzzle A is {ans};");
@@ -49,27 +49,23 @@ fn part_b(file_path: &str) -> usize {
     let mut ans = 0;
     for i in 0..bricks.len() {
         // Initialize the queue
-        let mut to_break_queue: Vec<usize> = Vec::new();
-        let mut broken: HashSet<usize> = HashSet::new();  // Don't include initial
-
-        for to_break in supporters.get(&i).unwrap().clone().drain() {
-            to_break_queue.push(to_break);
-        }
-        while to_break_queue.len() > 0 {
-            let new_brick = to_break_queue.pop().unwrap();
-            if broken.contains(&new_brick) {
-                continue
-            }
-
-            broken.insert(new_brick);
-            if supporters.contains_key(&new_brick) {
-                for to_break in supporters.get(&new_brick).unwrap().clone().drain() {
-                    to_break_queue.push(to_break);
+        let mut broken: HashSet<usize> = HashSet::new();
+        broken.insert(i);
+        loop {
+            let starting_len = broken.len();
+            for (test_brick, supported_by) in supported.iter() {
+                if supported_by.len() == 0 {
+                    continue
+                }
+                if supported_by.intersection(&broken).count() == supported_by.len() {
+                    broken.insert(*test_brick);
                 }
             }
+
+            if broken.len() == starting_len {break;}
         }
-        println!("Breaking brick {i} gives {}", broken.len());
-        ans += broken.len();
+        println!("Processed brick {i} and found {}", broken.len() - 1);
+        ans += broken.len() - 1;
     }
     ans
 }
