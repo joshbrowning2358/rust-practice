@@ -9,40 +9,23 @@ use std::iter::zip;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-use num::abs;
-
 fn main() {
     //let file_path = "data/puzzle18/example.txt"; let interior = [1, 1];
     let file_path = "data/puzzle18/input.txt"; let interior = [1, 1];
 
-    //let ans = part_a(file_path, interior);
-    //println!("Answer to puzzle A is {ans};");
+    let ans = part_a(file_path, interior);
+    println!("Answer to puzzle A is {ans};");
 
     let ans = part_b(file_path);
     println!("Answer to puzzle B is {ans};");
-
-    let mut directions = VecDeque::new();
-    let mut distances = VecDeque::new();
-    directions.push_back([0, 1]);
-    directions.push_back([1, 0]);
-    directions.push_back([0, 1]);
-    directions.push_back([1, 0]);
-    directions.push_back([0, -1]);
-    directions.push_back([-1, 0]);
-    distances.push_back(3);
-    distances.push_back(3);
-    distances.push_back(2);
-    distances.push_back(7);
-    distances.push_back(5);
-    distances.push_back(10);
-    //let ans = get_column_locations(&directions, &distances);
-    //println!("Answer is {:?}", ans);
-    //println!("Area is {}", compute_area(ans));
 }
 
-fn part_a(file_path: &str, _interior: [i32; 2]) -> i64 {
+fn part_a(file_path: &str, _interior: [i32; 2]) -> f64 {
     let mut directions: VecDeque<[i32; 2]> = VecDeque::new();
     let mut distances: VecDeque<i32> = VecDeque::new();
+    let mut last_direction: String = String::new();
+    let mut first_direction: String = String::new();
+    let mut trench_area: f64 = 0.;
 
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
@@ -56,27 +39,38 @@ fn part_a(file_path: &str, _interior: [i32; 2]) -> i64 {
                     "D" => [1, 0],
                     &_ => panic!("Weird direction!"),
                 });
-                distances.push_back(dist.parse::<i32>().unwrap())
+                let dist = dist.parse::<i32>().unwrap();
+                distances.push_back(dist);
+
+                if trench_area == 0. {first_direction = dir.to_string();}
+
+                // Update trench area
+                trench_area += (dist as f64 + 1.) / 2.;
+                // Correct for corners
+                trench_area += get_adjustment(dir, &last_direction);
+                last_direction = dir.to_string();
             }
         }
     }
 
+    trench_area += get_adjustment(&first_direction, &last_direction);
     //floodfill(&visited, interior) + (visited.len() as i32)
     let col_locs = get_column_locations(&directions, &distances);
-    println!("Col_locs are {:?}", col_locs);
-    compute_area(col_locs)
+    compute_area(col_locs) + trench_area
 }
 
-fn part_b(file_path: &str) -> i64 {
+fn part_b(file_path: &str) -> f64 {
     let mut directions: VecDeque<[i32; 2]> = VecDeque::new();
     let mut distances: VecDeque<i32> = VecDeque::new();
+    let mut last_direction: String = String::new();
+    let mut first_direction: String = String::new();
+    let mut trench_area: f64 = 0.;
 
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
             if let Ok(ip) = line {
                 let first_paren = ip.find('(').unwrap();
                 let hex = &ip[(first_paren + 2)..(first_paren + 7)];
-                distances.push_back(i32::from_str_radix(hex, 16).unwrap());
                 directions.push_back(match ip[(first_paren + 7)..(first_paren + 8)].to_string().as_str() {
                     "0" => [0, 1],
                     "1" => [1, 0],
@@ -84,19 +78,47 @@ fn part_b(file_path: &str) -> i64 {
                     "3" => [-1, 0],
                     &_ => panic!("Invalid direction!"),
                 });
+                let dist = i32::from_str_radix(hex, 16).unwrap();
+                distances.push_back(dist);
+
+                if trench_area == 0. {first_direction = ip[(first_paren + 7)..(first_paren + 8)].to_string();}
+
+                // Update trench area
+                trench_area += (dist as f64 + 1.) / 2.;
+                // Correct for corners
+                trench_area += get_adjustment(&ip[(first_paren + 7)..(first_paren + 8)], &last_direction);
+                last_direction = ip[(first_paren + 7)..(first_paren + 8)].to_string();
             }
         }
     }
-
+    
+    trench_area += get_adjustment(&first_direction, &last_direction);
     let col_locs = get_column_locations(&directions, &distances);
-    println!("\n\nFound col_locs {:?}", col_locs);
-    println!("Got area of {}", compute_area(col_locs));
-    0
+    let ans = compute_area(col_locs);
+    println!("Got area of {}", ans);
+    ans + trench_area
+}
+
+fn get_adjustment(dir: &str, last_dir: &str) -> f64 {
+    if dir == "R" || dir == "0" {
+        if last_dir == "U" || last_dir == "3" {return -0.25;}
+        if last_dir == "D" || last_dir == "1" {return -0.75;}
+    } else if dir == "L" || dir == "2" {
+        if last_dir == "U" || last_dir == "3" {return -0.75;}
+        if last_dir == "D" || last_dir == "1" {return -0.25;}
+    } else if dir == "U" || dir == "3" {
+        if last_dir == "R" || last_dir == "0" {return -0.75;}
+        if last_dir == "L" || last_dir == "2" {return -0.25;}
+    } else if dir == "D" || dir == "1" {
+        if last_dir == "R" || last_dir == "0" {return -0.25;}
+        if last_dir == "L" || last_dir == "2" {return -0.75;}
+    }
+    println!("Failed to return with inputs {} and {}", dir, last_dir);
+    0.
 }
 
 fn get_column_locations(directions: &VecDeque<[i32; 2]>, distances: &VecDeque<i32>) -> HashMap<[i32; 2], Vec<i32>> {
     let (min_row, _, max_row, _) = find_bounds(&directions, &distances);
-    println!("Found bounds of {min_row} to {max_row}");
 
     let mut results: HashMap<[i32; 2], Vec<i32>> = HashMap::new();
     results.insert([min_row, max_row], Vec::new());
@@ -143,7 +165,7 @@ fn get_column_locations(directions: &VecDeque<[i32; 2]>, distances: &VecDeque<i3
     results
 }
 
-fn compute_area(cols: HashMap<[i32; 2], Vec<i32>>) -> i64 {
+fn compute_area(cols: HashMap<[i32; 2], Vec<i32>>) -> f64 {
     let mut ans: i64 = 0;
     for (range, col_list) in cols.iter() {
         let mut col_list = col_list.clone();
@@ -151,42 +173,13 @@ fn compute_area(cols: HashMap<[i32; 2], Vec<i32>>) -> i64 {
         let height: i64 = (range[1] - range[0]) as i64;
         if height > 0 {
             for pair_idx in 0..(col_list.len() / 2) {
-                ans += height * ((1 + col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64);
-                //println!("Adding {}", height * ((1 + col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64));
+                let rect_area = height * ((col_list[pair_idx * 2 + 1] - col_list[pair_idx * 2]) as i64); 
+                ans += rect_area;
             }
         }
     }
 
-    // Have to adjust for trenches along keys
-    let mut keys: Vec<[i32; 2]> = cols.clone().into_iter().map(|(key, _value)| key).collect();
-    keys.sort_by_key(|x| (x[0], x[1]));
-    for i in 0..keys.len() {
-        let mut cols_list = cols[&keys[i]].clone();
-        cols_list.sort();
-        let mut curr_cols: VecDeque<i32> = VecDeque::from(cols_list);
-        let mut next_cols: VecDeque<i32>;
-        if i == (keys.len()  - 1) {
-            next_cols = VecDeque::new();
-        } else {
-            let mut cols_list = cols[&keys[i + 1]].clone();
-            cols_list.sort();
-            next_cols = VecDeque::from(cols_list);
-        }
-        println!("For rows {:?} curr_cols are {:?} and next {:?}; ans started at {ans}", keys[i], curr_cols, next_cols);
-
-        while (next_cols.len() > 0) & (curr_cols.len() > 0) {
-            ans += abs(next_cols.pop_front().unwrap() - curr_cols.pop_front().unwrap()) as i64;
-            ans += abs(next_cols.pop_back().unwrap() - curr_cols.pop_back().unwrap()) as i64;
-        }
-        while next_cols.len() > 0 {
-            ans += (next_cols.pop_back().unwrap() - next_cols.pop_back().unwrap()) as i64;
-        }
-        while curr_cols.len() > 0 {
-            ans += (curr_cols.pop_back().unwrap() - curr_cols.pop_back().unwrap()) as i64;
-        }
-        println!("Ans ended at {ans}");
-    }
-    ans
+    ans as f64
 }
 
 fn find_bounds(directions: &VecDeque<[i32; 2]>, distances: &VecDeque<i32>) -> (i32, i32, i32, i32) {

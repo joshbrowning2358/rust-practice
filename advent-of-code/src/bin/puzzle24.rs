@@ -2,6 +2,11 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+//use eqsolver::multivariable::MultiVarNewton;
+//use eqsolver::nalgebra::{SVector, SMatrix, ArrayStorage};
+use eqsolver::nalgebra::SVector;
+use nalgebra::matrix;
+
 fn main() {
     //let file_path = "data/puzzle24/example.txt"; let region = [10.0, 20.0];
     let file_path = "data/puzzle24/input.txt"; let region = [200000000000000.0, 400000000000000.0];
@@ -45,8 +50,91 @@ fn part_a(file_path: &str, region: [f32; 2]) -> i32 {
     ans
 }
 
-fn part_b(file_path: &str) -> i32 {
-    let _pv = parse_input(file_path);
+fn part_b(file_path: &str) -> i64 {
+    let pv: Vec<[i64; 6]> = parse_input(file_path);
+    let pv: Vec<[f64; 6]> = pv.into_iter().map(|x| [x[0] as f64, x[1] as f64, x[2] as f64, x[3] as f64, x[4] as f64, x[5] as f64]).collect();
+    // v will be (x, y, z, vx, vy, vz, t1, t2, t3)
+    let scale: f64 = 1000000.;
+    let mut pv0 = pv[0]; pv0 = [pv0[0] / scale, pv0[1] / scale, pv0[2] / scale, pv0[3], pv0[4], pv0[5]];
+    let mut pv1 = pv[4]; pv1 = [pv1[0] / scale, pv1[1] / scale, pv1[2] / scale, pv1[3], pv1[4], pv1[5]];
+    let mut pv2 = pv[5]; pv2 = [pv2[0] / scale, pv2[1] / scale, pv2[2] / scale, pv2[3], pv2[4], pv2[5]];
+    let f = |v: SVector<f64, 6>| SVector::from([
+        (pv0[1] - v[1]) * (pv0[3] - v[3]) + (pv0[0] - v[0]) * (pv0[4] - v[4]),
+        (pv0[2] - v[2]) * (pv0[3] - v[3]) + (pv0[0] - v[0]) * (pv0[5] - v[5]),
+        (pv1[1] - v[1]) * (pv1[3] - v[3]) + (pv1[0] - v[0]) * (pv1[4] - v[4]),
+        (pv1[2] - v[2]) * (pv1[3] - v[3]) + (pv1[0] - v[0]) * (pv1[5] - v[5]),
+        (pv2[1] - v[1]) * (pv2[3] - v[3]) + (pv2[0] - v[0]) * (pv2[4] - v[4]),
+        (pv2[2] - v[2]) * (pv2[3] - v[3]) + (pv2[0] - v[0]) * (pv2[5] - v[5]),
+    ]);
+
+    // Jacobian of F
+    let jacobian = |v: SVector<f64, 6>| matrix![
+        v[4] - pv0[4], v[3] - pv0[3], 0., v[1] - pv0[1], v[0] - pv0[0], 0.;
+        v[5] - pv0[5], 0., v[3] - pv0[3], v[2] - pv0[2], 0., v[0] - pv0[0];
+        v[4] - pv1[4], v[3] - pv1[3], 0., v[1] - pv1[1], v[0] - pv1[0], 0.;
+        v[5] - pv1[5], 0., v[3] - pv1[3], v[2] - pv1[2], 0., v[0] - pv1[0];
+        v[4] - pv2[4], v[3] - pv2[3], 0., v[1] - pv2[1], v[0] - pv2[0], 0.;
+        v[5] - pv2[5], 0., v[3] - pv2[3], v[2] - pv2[2], 0., v[0] - pv2[0];
+    ];
+
+    //let mut x = SVector::from([pv[0][3], pv[0][4], pv[0][5], 0., 0., 0.]);
+    let mut x = SVector::from([200000000000000. / scale, 200000000000000. / scale, 200000000000000. / scale, -15., 160., 165.]);
+    let mut error: f64 = 10000.;
+    //while error > 0.0001 {
+    for i in 0..100 {
+        let error_vec = f(x);
+        let grad = jacobian(x);
+        //println!("Grad is {:?}", grad);
+        x -= (100. - i as f64) / 100. * grad.try_inverse().unwrap() * error_vec;
+        error = error_vec.norm();
+    }
+    println!("Solution is {:?} with error {:?}", x, error);
+    //let solution = MultiVarNewton::new(F, J).with_tol(1e-3).with_itermax(1000).solve(SVector::from([pv[0][3], pv[0][4], pv[0][5], 0., 0., 0.]));
+    //println!("Found solution {:?}", solution);
+    x[0].round() as i64 + x[1].round() as i64 + x[2].round() as i64
+}
+
+fn part_b_nine(file_path: &str) -> i32 {
+    let pv: Vec<[i64; 6]> = parse_input(file_path);
+    let pv: Vec<[f64; 6]> = pv.into_iter().map(|x| [x[0] as f64, x[1] as f64, x[2] as f64, x[3] as f64, x[4] as f64, x[5] as f64]).collect();
+    // v will be (x, y, z, vx, vy, vz, t1, t2, t3)
+    let F = |v: SVector<f64, 9>| SVector::from([
+        pv[0][0] - v[0] + v[6] * (pv[0][3] - v[3]),
+        pv[0][1] - v[1] + v[6] * (pv[0][4] - v[4]),
+        pv[0][2] - v[2] + v[6] * (pv[0][5] - v[5]),
+        pv[1][0] - v[0] + v[7] * (pv[1][3] - v[3]),
+        pv[1][1] - v[1] + v[7] * (pv[1][4] - v[4]),
+        pv[1][2] - v[2] + v[7] * (pv[1][5] - v[5]),
+        pv[2][0] - v[0] + v[8] * (pv[2][3] - v[3]),
+        pv[2][1] - v[1] + v[8] * (pv[2][4] - v[4]),
+        pv[2][2] - v[2] + v[8] * (pv[2][5] - v[5]),
+    ]);
+
+    // Jacobian of F
+    let J = |v: SVector<f64, 9>| matrix![
+        -1.0, 0.0, 0.0, -v[6], 0.0, 0.0, pv[0][3] - v[3], 0.0, 0.0;
+        0.0, -1.0, 0.0, 0.0, -v[6], 0.0, pv[0][4] - v[4], 0.0, 0.0;
+        0.0, 0.0, -1.0, 0.0, 0.0, -v[6], pv[0][5] - v[5], 0.0, 0.0;
+        -1.0, 0.0, 0.0, -v[7], 0.0, 0.0, 0.0, pv[1][3] - v[3], 0.0;
+        0.0, -1.0, 0.0, 0.0, -v[7], 0.0, 0.0, pv[1][4] - v[4], 0.0;
+        0.0, 0.0, -1.0, 0.0, 0.0, -v[7], 0.0, pv[1][5] - v[5], 0.0;
+        -1.0, 0.0, 0.0, -v[8], 0.0, 0.0, 0.0, 0.0, pv[2][3] - v[3];
+        0.0, -1.0, 0.0, 0.0, -v[8], 0.0, 0.0, 0.0, pv[2][4] - v[4];
+        0.0, 0.0, -1.0, 0.0, 0.0, -v[8], 0.0, 0.0, pv[2][5] - v[5];
+    ];
+    
+    let mut x = SVector::from([pv[0][3], pv[0][4], pv[0][5], 0., 0., 0., 1., 1., 1.]); 
+    let mut error = 10000.0;
+    for _ in 0..10 {
+        let error_vec = F(x);
+        let grad = J(x);
+        println!("Grad is {:?}", grad);
+        x -= grad.try_inverse().unwrap() * error_vec;
+        error = error_vec.norm();
+        println!("New x is {:?} with error {:?}", x, error);
+    }
+    //let solution = MultiVarNewton::new(F, J).solve(SVector::from([1., 1., 1., 1., 1., 1., 1., 1., 1.]));
+    //println!("Found solution {:?}", solution);
     0
 }
 
