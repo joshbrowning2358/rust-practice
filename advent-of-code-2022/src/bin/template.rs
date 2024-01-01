@@ -6,7 +6,6 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let file_path = &args[1];
-    //let file_path = "data/puzzle/input.txt";
 
     let ans = part_a(file_path);
     println!("Answer to puzzle A is {ans};");
