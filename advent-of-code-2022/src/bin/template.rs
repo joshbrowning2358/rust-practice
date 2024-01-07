@@ -7,14 +7,11 @@ fn main() {
 
     let file_path = &args[1];
 
-    let ans = part_a(file_path);
-    println!("Answer to puzzle A is {ans};");
-
-    let ans = part_b(file_path);
-    println!("Answer to puzzle B is {ans};");
+    part_a(file_path);
+    part_b(file_path);
 }
 
-fn part_a(file_path: &str) -> i32 {
+fn part_a(file_path: &str) {
     let mut ans: i32 = 0;
 
     if let Ok(lines) = read_lines::read_lines(file_path) {
@@ -24,9 +21,9 @@ fn part_a(file_path: &str) -> i32 {
             }
         }
     }
-    ans
+    println!("Answer to part 1 is {ans}");
 }
 
-fn part_b(file_path: &str) -> i32 {
-    0
+fn part_b(file_path: &str) {
+    println!("Answer to part 2 is {}", file_path.len());
 }
