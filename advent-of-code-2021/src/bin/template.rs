@@ -1,8 +1,10 @@
 mod file_reader;
 
 fn main() {
-    let file_name = file!();
-    let file_path = "data/{file_name}/input.txt";
+    let full_path = file!();
+    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
+    (file_name, _) = file_name.split_once('.').unwrap();
+    let file_path = format!("data/{file_name}/input.txt");
 
     let mut ans = part_a(file_path);
     println!("Answer to {file_name} a is {ans};");
