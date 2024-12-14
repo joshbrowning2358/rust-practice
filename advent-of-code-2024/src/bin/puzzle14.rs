@@ -14,22 +14,57 @@ fn main() {
 }
 
 fn part_a(file_path: &str) -> i32 {
-    return 0
+    let (robots, width, height) = parse_input(file_path);
+
+    let mut quadrants = vec![0; 4];
+    for ((pos_x, pos_y), (vel_x, vel_y)) in robots {
+        let end_pos_x = (pos_x + vel_x * 100).rem_euclid(width);
+        let end_pos_y = (pos_y + vel_y * 100).rem_euclid(height);
+        if end_pos_x < width / 2 {
+            if end_pos_y < height / 2 {
+                quadrants[0] += 1;
+            } else if end_pos_y > height / 2 {
+                quadrants[1] += 1;
+            }
+        } else if end_pos_x > width / 2 {
+            if end_pos_y < height / 2 {
+                quadrants[2] += 1;
+            } else if end_pos_y > height / 2 {
+                quadrants[3] += 1;
+            }
+        }
+    }
+    return quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 }
 
 fn part_b(file_path: &str) -> i32 {
     return 0
 }
 
-fn parse_input(file_path: &str) -> Vec<Vec<i32>> {
+fn parse_input(file_path: &str) -> (Vec<((i32, i32), (i32, i32))>, i32, i32) {
     let mut result = Vec::new();
 
     if let Ok(lines) = file_reader::read_lines(file_path) {
         for line in lines {
-            if let Ok(pipes) = line {
+            if let Ok(robot) = line {
+                let (pos, vel) = robot[2..].split_once(" v=").unwrap();
+                let (pos_x, pos_y) = pos.split_once(',').unwrap();
+                let (vel_x, vel_y) = vel.split_once(',').unwrap();
+                result.push(
+                    (
+                        (pos_x.parse::<i32>().unwrap(),
+                         pos_y.parse::<i32>().unwrap()),
+                        (vel_x.parse::<i32>().unwrap(),
+                         vel_y.parse::<i32>().unwrap())
+                    )
+                );
             }
         }
     }
 
-    return result;
+    if file_path.contains("easy") {
+        return (result, 11, 7)
+    } else {
+        return (result, 101, 103)
+    }
 }
