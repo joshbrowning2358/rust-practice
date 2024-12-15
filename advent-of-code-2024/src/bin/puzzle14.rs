@@ -1,3 +1,6 @@
+use std::{thread, time};
+use std::collections::HashSet;
+
 mod file_reader;
 
 fn main() {
@@ -38,6 +41,37 @@ fn part_a(file_path: &str) -> i32 {
 }
 
 fn part_b(file_path: &str) -> i32 {
+    // 1000 is too low
+    // 100000 is too high
+    let (robots, width, height) = parse_input(file_path);
+
+    for i in 1000..100000 {
+        let mut grid = vec![vec!['.'; width as usize]; height as usize];
+        let mut positions = HashSet::new();
+        let mut cond = false;
+        for ((pos_x, pos_y), (vel_x, vel_y)) in &robots {
+            let end_pos_x = (pos_x + vel_x * i).rem_euclid(width);
+            let end_pos_y = (pos_y + vel_y * i).rem_euclid(height);
+            grid[end_pos_y as usize][end_pos_x as usize] = '*';
+
+            positions.insert((end_pos_x, end_pos_y));
+            if (end_pos_x > 0) & (end_pos_y > 0) & (end_pos_x < width - 1) & (end_pos_y < height - 1) {
+                if positions.contains(&(end_pos_x - 1, end_pos_y)) & positions.contains(&(end_pos_x + 1, end_pos_y)) & positions.contains(&(end_pos_x, end_pos_y - 1)) & positions.contains(&(end_pos_x, end_pos_y + 1)) {
+                    cond = true;
+                }
+            }
+        }
+        // let cond = grid[50][49..52].iter().all(|x| *x == '*') & grid[51][49..52].iter().all(|x| *x == '*') & grid[52][49..52].iter().all(|x| *x == '*');
+        // let cond = grid[51][50] == '*';
+        if cond {
+            println!("Iteration {i}");
+            for grid_line in grid {
+                let printable: String = grid_line.iter().collect();
+                println!("{printable:?}");
+            }
+            thread::sleep(time::Duration::from_millis(1000));
+        }
+    }
     return 0
 }
 
