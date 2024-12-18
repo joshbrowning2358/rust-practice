@@ -1,4 +1,4 @@
-mod file_reader;
+use advent_of_code_2024::file_reader;
 
 fn main() {
     let full_path = file!();
@@ -26,10 +26,10 @@ fn parse_input(file_path: &str) -> Vec<Vec<i32>> {
 
     if let Ok(lines) = file_reader::read_lines(file_path) {
         for line in lines {
-            if let Ok(pipes) = line {
+            if let Ok(row) = line {
             }
         }
     }
 
-    return result;
+    return result
 }

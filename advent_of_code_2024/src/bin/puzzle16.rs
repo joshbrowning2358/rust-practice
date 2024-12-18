@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use binary_heap_plus::BinaryHeap;
-
-mod file_reader;
+use advent_of_code_2024::common::Point;
+use advent_of_code_2024::file_reader;
 
 fn main() {
     let full_path = file!();
