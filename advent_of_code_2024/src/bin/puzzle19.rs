@@ -25,17 +25,6 @@ fn part_a(file_path: &str) -> i32 {
     return result
 }
 
-fn part_b_slow(file_path: &str) -> i32 {
-    let (towels_string, towel_sets) = parse_input(file_path);
-    let towels = towels_string.iter().map(|x| x.as_str()).collect();
-
-    let mut result: i32 = 0;
-    for towel_set in towel_sets {
-        result += count_contains(&towel_set, &towels);
-    }
-    return result
-}
-
 fn part_b(file_path: &str) -> i64 {
     let (towels_string, towel_sets) = parse_input(file_path);
     let towels = towels_string.iter().map(|x| x.as_str()).collect();
@@ -43,7 +32,7 @@ fn part_b(file_path: &str) -> i64 {
 
     let mut result: i64 = 0;
     for towel_set in towel_sets {
-        result += count_contains_cache(towel_set, &towels, &mut cache);
+        result += count_contains(towel_set, &towels, &mut cache);
     }
     return result
 }
@@ -83,21 +72,7 @@ fn check_contains(towel_set: &str, towels: &Vec<&str>) -> bool {
     return false
 }
 
-fn count_contains(towel_set: &str, towels: &Vec<&str>) -> i32 {
-    if towel_set.len() == 0 {
-        return 1
-    }
-
-    let mut valid_towels: i32 = 0;
-    for towel in towels {
-        if towel_set.starts_with(towel) {
-            valid_towels += count_contains(&towel_set[towel.len()..], &towels);
-        }
-    }
-    return valid_towels
-}
-
-fn count_contains_cache(towel_set: String, towels: &Vec<&str>, cache: &mut HashMap<String, i64>) -> i64 {
+fn count_contains(towel_set: String, towels: &Vec<&str>, cache: &mut HashMap<String, i64>) -> i64 {
     if towel_set.len() == 0 {
         return 1
     }
@@ -108,7 +83,7 @@ fn count_contains_cache(towel_set: String, towels: &Vec<&str>, cache: &mut HashM
     let mut valid_towels: i64 = 0;
     for towel in towels {
         if towel_set.starts_with(towel) {
-            valid_towels += count_contains_cache(towel_set[towel.len()..].to_string(), &towels, cache);
+            valid_towels += count_contains(towel_set[towel.len()..].to_string(), &towels, cache);
         }
     }
     cache.insert(towel_set, valid_towels);
