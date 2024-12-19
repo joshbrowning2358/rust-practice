@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use advent_of_code_2024::file_reader;
 
 fn main() {
@@ -6,30 +7,110 @@ fn main() {
     (file_name, _) = file_name.split_once('.').unwrap();
     let file_path = format!("data/{file_name}/input.txt");
 
-    let mut ans = part_a(&file_path);
+    let ans = part_a(&file_path);
     println!("Answer to {file_name} a is {ans};");
 
-    ans = part_b(&file_path);
+    let ans = part_b(&file_path);
     println!("Answer to {file_name} b is {ans};");
 }
 
 fn part_a(file_path: &str) -> i32 {
-    return 0
+    let (towels_string, towel_sets) = parse_input(file_path);
+    let towels = towels_string.iter().map(|x| x.as_str()).collect();
+
+    let mut result: i32 = 0;
+    for towel_set in towel_sets {
+        result += check_contains(&towel_set, &towels) as i32;
+    }
+    return result
 }
 
-fn part_b(file_path: &str) -> i32 {
-    return 0
+fn part_b_slow(file_path: &str) -> i32 {
+    let (towels_string, towel_sets) = parse_input(file_path);
+    let towels = towels_string.iter().map(|x| x.as_str()).collect();
+
+    let mut result: i32 = 0;
+    for towel_set in towel_sets {
+        result += count_contains(&towel_set, &towels);
+    }
+    return result
 }
 
-fn parse_input(file_path: &str) -> Vec<Vec<i32>> {
-    let mut result = Vec::new();
+fn part_b(file_path: &str) -> i64 {
+    let (towels_string, towel_sets) = parse_input(file_path);
+    let towels = towels_string.iter().map(|x| x.as_str()).collect();
+    let mut cache: HashMap<String, i64> = HashMap::new();
 
+    let mut result: i64 = 0;
+    for towel_set in towel_sets {
+        result += count_contains_cache(towel_set, &towels, &mut cache);
+    }
+    return result
+}
+
+fn parse_input(file_path: &str) -> (Vec<String>, Vec<String>) {
+    let mut towel_sets = Vec::new();
+    let mut towels = Vec::new();
+
+    let mut i: usize = 0;
     if let Ok(lines) = file_reader::read_lines(file_path) {
         for line in lines {
             if let Ok(row) = line {
+                if i == 0 {
+                    towels = row.split(", ").map(|x| x.to_string()).collect();
+                } else if i > 1 {
+                    towel_sets.push(row);
+                }
+                i += 1;
             }
         }
     }
 
-    return result
+    return (towels, towel_sets)
+}
+
+fn check_contains(towel_set: &str, towels: &Vec<&str>) -> bool {
+    if towel_set.len() == 0 {
+        return true
+    }
+
+    for towel in towels {
+        if towel_set.starts_with(towel) {
+            let result = check_contains(&towel_set[towel.len()..], &towels);
+            if result {return true}
+        }
+    }
+    return false
+}
+
+fn count_contains(towel_set: &str, towels: &Vec<&str>) -> i32 {
+    if towel_set.len() == 0 {
+        return 1
+    }
+
+    let mut valid_towels: i32 = 0;
+    for towel in towels {
+        if towel_set.starts_with(towel) {
+            valid_towels += count_contains(&towel_set[towel.len()..], &towels);
+        }
+    }
+    return valid_towels
+}
+
+fn count_contains_cache(towel_set: String, towels: &Vec<&str>, cache: &mut HashMap<String, i64>) -> i64 {
+    if towel_set.len() == 0 {
+        return 1
+    }
+    if cache.contains_key(&towel_set) {
+        return *cache.get(&towel_set).unwrap();
+    }
+
+    let mut valid_towels: i64 = 0;
+    for towel in towels {
+        if towel_set.starts_with(towel) {
+            valid_towels += count_contains_cache(towel_set[towel.len()..].to_string(), &towels, cache);
+        }
+    }
+    cache.insert(towel_set, valid_towels);
+    return valid_towels
 }
