@@ -1,6 +1,6 @@
 use std::collections::{HashSet, BTreeSet};
 
-mod file_reader;
+use advent_of_code_2024::file_reader;
 
 fn main() {
     let full_path = file!();
