@@ -3,33 +3,13 @@ use std::collections::{HashSet,VecDeque};
 use advent_of_code_2024::file_reader;
 
 fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
+    let file_path = format!("data/puzzle22/input.txt");
 
-    let ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
+    let ans = counts(&file_path);
+    println!("Total number of distinct deltas: {ans}");
 }
 
-fn part_a(file_path: &str) -> i64 {
-    let secret_nums = parse_input(file_path);
-
-    let mut result: i64 = 0;
-    for secret_num in secret_nums {
-        let mut secret = secret_num;
-        for _ in 0..2000 {
-            secret = evolution(secret);
-        }
-        result += secret;
-    }
-    return result
-}
-
-fn part_b(file_path: &str) -> i32 {
+fn counts(file_path: &str) -> usize {
     let secret_nums = parse_input(file_path);
 
     let mut prices: Vec<Vec<i8>> = vec![];
@@ -53,11 +33,9 @@ fn part_b(file_path: &str) -> i32 {
     }
     
     // Search for "candidates", i.e. 4 deltas that may lead to the highest price
-    let cand = get_candidates(&prices, &deltas, 7);
-    let l = cand.len();
-    println!("Found {l} candidates!");
-
-    return eval_candidates(&prices, &deltas, &cand)
+    let cand = get_candidates(&prices, &deltas, 0);
+    let total_candidate_num = cand.len();
+    return total_candidate_num
 }
 
 fn parse_input(file_path: &str) -> Vec<i64> {
@@ -91,27 +69,4 @@ fn get_candidates(prices: &Vec<Vec<i8>>, deltas: &Vec<Vec<Vec<i8>>>, cutoff: i8)
         }
     }
     return cand;
-}
-
-fn eval_candidates(prices: &Vec<Vec<i8>>, deltas: &Vec<Vec<Vec<i8>>>, cands: &HashSet<Vec<i8>>) -> i32 {
-    let mut best: i32 = 0;
-    let total = cands.len();
-    for (c_idx, cand) in cands.iter().enumerate() {
-        let mut cand_score: i32 = 0;
-        'monkey: for p_idx in 0..prices.len() {
-            for i_idx in 4..prices[p_idx].len() {
-                if deltas[p_idx][i_idx] == *cand {
-                    cand_score += prices[p_idx][i_idx] as i32;
-                    continue 'monkey
-                }
-            }
-        }
-        if cand_score > best {
-            best = cand_score;
-        }
-        if c_idx % 100 == 0 {
-            println!("Ran {c_idx}/{total} iterations, best_score is {best}");
-        }
-    }
-    return best
 }
