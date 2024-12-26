@@ -8,9 +8,6 @@ fn main() {
 
     let ans = part_a(&file_path);
     println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
 }
 
 fn part_a(file_path: &str) -> i32 {
@@ -32,10 +29,6 @@ fn part_a(file_path: &str) -> i32 {
     }
 
     return result
-}
-
-fn part_b(file_path: &str) -> i32 {
-    return 0
 }
 
 fn parse_input(file_path: &str) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {

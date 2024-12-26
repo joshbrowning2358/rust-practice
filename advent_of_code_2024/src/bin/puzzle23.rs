@@ -49,11 +49,9 @@ fn part_b(file_path: &str) -> String {
     while (set_indices.len() > 0) | (next_cand < node_names.len() - largest_set.len()) {
         if next_cand == node_names.len() {
             next_cand = set_indices.pop().unwrap() + 1;
-            println!("Set indices are {set_indices:?}");
         } else {
             if is_connected_to_set(&adjacency, &node_names, &set_indices, next_cand) {
                 set_indices.push(next_cand);
-                println!("Set indices are {set_indices:?}");
                 if set_indices.len() > largest_set.len() {
                     largest_set = set_indices.clone();
                 }
