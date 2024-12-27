@@ -27,7 +27,7 @@ fn main() {
 }
 
 fn part_a(file_path: &str) -> String {
-    let (program, mut registers) = parse_input(file_path);
+    let (program, registers) = parse_input(file_path);
     let output = run_program(&program, registers);
     return output.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",")
 }
@@ -36,31 +36,14 @@ fn part_b(file_path: &str) -> String {
     // 1650854000 is too low
     let (program, mut registers) = parse_input(file_path);
 
-    //println!("Just running the program");
     let mut a_0: i128 = 1;
-    //for i in 0..500 {
-    //    registers.a = a_0;
-    //    let output = run_program(&program, registers.clone());
-    //    println!("Output for {a_0} is {output:?}");
-    //    a_0 += 1;
-    //}
 
-    // a_0 = 1;
     'main: loop {
-        println!("Trying {a_0}!");
         registers.a = a_0;
         let output = run_program(&program, registers.clone());
         if output == program {
             break
         }
-        //println!("  Result for {a_0} is {output:?}");
-        //if output == program[(program.len() - match_len as usize - 1)..] {
-        //    println!("Partial match at {a_0} with {output:?}!");
-        //    a_0 *= 8;
-        //    match_len += 1;
-        //    continue
-        //}
-        println!("Got result {output:?}");
         for (i, (ans, tar)) in output.iter().rev().zip(program.iter().rev()).enumerate() {
             if ans != tar {
                 a_0 += 8_i128.pow((output.len() - i - 1) as u32);
@@ -68,15 +51,7 @@ fn part_b(file_path: &str) -> String {
             }
         }
         a_0 *= 8;
-        //if a_0 > 100000 {
-        //    break
-        //}
     }
-
-    //registers.a = a_0;
-    //let output = run_program(&program, registers.clone());
-    //println!("Result is {output:?}");
-    //println!(" Input is {program:?}");
 
     return a_0.to_string();
 }
@@ -132,7 +107,6 @@ fn run_program(program: &Vec<i32>, mut registers: Registers) -> Vec<i32> {
             3 => {
                 if registers.a != 0 {
                     i = literal_operand as usize;
-                    //println!("Continuing");
                     continue
                 }
             }

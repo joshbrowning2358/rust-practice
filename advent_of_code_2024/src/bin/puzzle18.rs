@@ -31,29 +31,33 @@ fn part_a(file_path: &str) -> i32 {
     let locs = locs[..1024].to_vec();
     //let (locs, grid_size) = parse_input(file_path, false);
 
-    let mut grid = vec![vec!['.'; (grid_size.x + 1) as usize]; (grid_size.y + 1) as usize];
-    for loc in &locs {
-        grid[loc.y as usize][loc.x as usize] = '#';
-    }
-
     let start = Point{x: 0, y: 0};
-    let (dist, path) = dijkstra(&locs, start, grid_size);
-    
-    for pt in path {
-        if grid[pt.y as usize][pt.x as usize] == '#' {
-            panic!("Path runs over a #");
-        } else {
-            grid[pt.y as usize][pt.x as usize] = 'O'
-        }
-    }
+    let (dist, _path) = dijkstra(&locs, &start, &grid_size);
 
-    for grid_row in &grid {
-        let s: String = grid_row.into_iter().collect();
-        println!("{s:?}");
-    }
+    // visualize_path(&path, &locs, &grid_size);
 
     return dist
 }
+
+// fn visualize_path(path: &Vec<Point>, locs: &Vec<Point>, grid_size: &Point) {
+//     let mut grid = vec![vec!['.'; (grid_size.x + 1) as usize]; (grid_size.y + 1) as usize];
+//     for loc in locs {
+//         grid[loc.y as usize][loc.x as usize] = '#';
+//     }
+// 
+//     for pt in path {
+//         if grid[pt.y as usize][pt.x as usize] == '#' {
+//             panic!("Path runs over a #");
+//         } else {
+//             grid[pt.y as usize][pt.x as usize] = 'O'
+//         }
+//     }
+// 
+//     for grid_row in &grid {
+//         let s: String = grid_row.into_iter().collect();
+//         println!("{s:?}");
+//     }
+// }
 
 fn part_b(file_path: &str) -> Point {
     let (locs, grid_size) = parse_input(file_path, true);
@@ -64,7 +68,7 @@ fn part_b(file_path: &str) -> Point {
 
     while upper > lower + 1 {
         let curr_locs = locs[..cand].to_vec();
-        let (dist, _) = dijkstra(&curr_locs, start.clone(), grid_size.clone());
+        let (dist, _) = dijkstra(&curr_locs, &start, &grid_size);
         
         if dist == -1 {
             upper = cand;
@@ -114,14 +118,14 @@ fn parse_input(file_path: &str, all_pts: bool) -> (Vec<Point>, Point) {
     return (result, grid_size)
 }
 
-fn dijkstra(locs: &Vec<Point>, start: Point, end: Point) -> (i32, Vec<Point>) {
+fn dijkstra(locs: &Vec<Point>, start: &Point, end: &Point) -> (i32, Vec<Point>) {
     let mut unvisited = BinaryHeap::from_vec_cmp(
         vec![], |a: &Node, b: &Node| b.dist.cmp(&a.dist)
     );
     let mut visited: HashSet::<Point> = HashSet::new();
     // let mut to_explore_dists: HashMap::<Point, i32> = HashMap::new();
 
-    unvisited.push(Node{pt: start.clone(), dist: 0, path: vec![start]});
+    unvisited.push(Node{pt: start.clone(), dist: 0, path: vec![start.clone()]});
 
     let final_dist: i32;
     let final_path: Vec<Point>;
@@ -131,7 +135,7 @@ fn dijkstra(locs: &Vec<Point>, start: Point, end: Point) -> (i32, Vec<Point>) {
             continue
         }
         visited.insert(curr_node.pt.clone());
-        if curr_node.pt == end {
+        if &curr_node.pt == end {
             final_dist = curr_node.dist;
             final_path = curr_node.path;
             break

@@ -27,7 +27,6 @@ fn part_a(file_path: &str) -> i32 {
         for code in first_moves {
             second_moves.append(&mut get_dir_moves(&code, true));
         }
-        println!("Best second set of moves is 28");
         let mut third_moves: VecDeque<String> = VecDeque::new();
         for code in second_moves {
             third_moves.append(&mut get_dir_moves(&code, true));
@@ -38,7 +37,6 @@ fn part_a(file_path: &str) -> i32 {
                 min = code.len();
             }
         }
-        println!("Min pushes for code {code:?} is {min}");
         result += (min as i32) * to_num(code);
     }
 
@@ -52,22 +50,18 @@ fn part_b(file_path: &str) -> i64 {
     for code in codes {
         let first_moves = get_button_moves(&code);
         let mut best: i64 = 0;
-        // println!("First moves is {first_moves:?}");
         for first_move in &first_moves {
-            // println!("Processing {first_move}");
             let mut last_char = 'A';
             let mut curr_total = 0;
             for next_char in first_move.chars() {
                 let increment = count_pushes(last_char, next_char, 24);
                 curr_total += increment;
-                // println!("  Moving from {last_char} to {next_char} requires {increment}");
                 last_char = next_char;
             }
             if (curr_total < best) | (best == 0) {
                 best = curr_total;
             }
         }
-        println!("Min pushes for code {code:?} is {best}");
         result += best * (to_num(code) as i64);
     }
 
