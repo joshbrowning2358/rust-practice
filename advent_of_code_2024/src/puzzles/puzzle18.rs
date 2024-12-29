@@ -1,8 +1,8 @@
 use binary_heap_plus::BinaryHeap;
 use std::collections::HashSet;
 
-use advent_of_code_2024::file_reader;
-use advent_of_code_2024::common::Point;
+use crate::file_reader;
+use crate::common::Point;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -11,20 +11,7 @@ pub struct Node {
     pub path: Vec<Point>,
 }
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans:?};");
-}
-
-fn part_a(file_path: &str) -> i32 {
+pub fn part_a(file_path: &str) -> i32 {
     // 214 is too low
     // 1276 is too high
     let (locs, grid_size) = parse_input(file_path, true);
@@ -59,7 +46,7 @@ fn part_a(file_path: &str) -> i32 {
 //     }
 // }
 
-fn part_b(file_path: &str) -> Point {
+pub fn part_b(file_path: &str) -> Point {
     let (locs, grid_size) = parse_input(file_path, true);
     let start = Point{x: 0, y: 0};
     let mut lower = 0;

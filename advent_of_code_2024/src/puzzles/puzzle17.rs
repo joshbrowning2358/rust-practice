@@ -1,4 +1,4 @@
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
 #[derive(Clone)]
 struct Registers {
@@ -13,26 +13,13 @@ impl Registers {
     }
 }
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let mut ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> String {
+pub fn part_a(file_path: &str) -> String {
     let (program, registers) = parse_input(file_path);
     let output = run_program(&program, registers);
     return output.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",")
 }
 
-fn part_b(file_path: &str) -> String {
+pub fn part_b(file_path: &str) -> String {
     // 1650854000 is too low
     let (program, mut registers) = parse_input(file_path);
 

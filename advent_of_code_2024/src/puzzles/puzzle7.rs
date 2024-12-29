@@ -1,19 +1,6 @@
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let mut ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> i64 {
+pub fn part_a(file_path: &str) -> i64 {
     // 27516147946705 is too low
     // 28730327770375
     let equations = parse_input(file_path);
@@ -27,7 +14,7 @@ fn part_a(file_path: &str) -> i64 {
     return result
 }
 
-fn part_b(file_path: &str) -> i64 {
+pub fn part_b(file_path: &str) -> i64 {
     let equations = parse_input(file_path);
     let mut result: i64 = 0;
     for equation in equations.iter() {

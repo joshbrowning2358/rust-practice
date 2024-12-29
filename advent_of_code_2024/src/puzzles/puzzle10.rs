@@ -1,21 +1,8 @@
 use std::collections::HashSet;
 
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/easy.txt");
-
-    let mut ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> usize {
+pub fn part_a(file_path: &str) -> usize {
     let map = parse_input(file_path);
     let width = map[0].len();
     let height = map.len();
@@ -32,7 +19,7 @@ fn part_a(file_path: &str) -> usize {
     return result
 }
 
-fn part_b(file_path: &str) -> usize {
+pub fn part_b(file_path: &str) -> usize {
     let map = parse_input(file_path);
     let width = map[0].len();
     let height = map.len();

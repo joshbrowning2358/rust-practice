@@ -1,6 +1,5 @@
-use std::hint::black_box;
 use criterion::{criterion_group, criterion_main, Criterion};
-use advent_of_code_2024::bin::puzzle_1::{part_a, part_b};
+use advent_of_code_2024::puzzles::puzzle1::{part_a, part_b};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("puzzle 1a easy", |b| b.iter(|| part_a("./data/puzzle1/easy.txt")));

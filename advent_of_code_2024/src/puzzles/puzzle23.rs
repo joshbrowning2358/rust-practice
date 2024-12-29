@@ -1,21 +1,8 @@
 use std::collections::HashMap;
 
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> i32 {
+pub fn part_a(file_path: &str) -> i32 {
     let adjacency = parse_input(file_path);
 
     let mut num_triangles = 0;
@@ -36,7 +23,7 @@ fn part_a(file_path: &str) -> i32 {
     return num_triangles / 6
 }
 
-fn part_b(file_path: &str) -> String {
+pub fn part_b(file_path: &str) -> String {
     let adjacency = parse_input(file_path);
     let mut node_names: Vec<String> = vec![];
     for k in adjacency.keys() {

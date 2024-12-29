@@ -2,22 +2,9 @@ use std::collections::VecDeque;
 
 use memoize::memoize;
 
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> i32 {
+pub fn part_a(file_path: &str) -> i32 {
     let codes = parse_input(file_path);
 
     let mut result: i32 = 0;
@@ -43,7 +30,7 @@ fn part_a(file_path: &str) -> i32 {
     return result
 }
 
-fn part_b(file_path: &str) -> i64 {
+pub fn part_b(file_path: &str) -> i64 {
     let codes = parse_input(file_path);
 
     let mut result: i64 = 0;

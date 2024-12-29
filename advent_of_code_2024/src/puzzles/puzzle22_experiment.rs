@@ -1,13 +1,6 @@
 use std::collections::{HashSet,VecDeque};
 
-use advent_of_code_2024::file_reader;
-
-fn main() {
-    let file_path = format!("data/puzzle22/input.txt");
-
-    let ans = counts(&file_path);
-    println!("Total number of distinct deltas: {ans}");
-}
+use crate::file_reader;
 
 fn counts(file_path: &str) -> usize {
     let secret_nums = parse_input(file_path);

@@ -1,22 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use num::integer::gcd;
 
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let mut ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> i32 {
+pub fn part_a(file_path: &str) -> i32 {
     // 340 is too high
     let mut result: HashSet::<(i32, i32)> = HashSet::new();
     let (width, height, antennas) = parse_input(file_path);
@@ -39,7 +26,7 @@ fn part_a(file_path: &str) -> i32 {
     return result.len() as i32
 }
 
-fn part_b(file_path: &str) -> i32 {
+pub fn part_b(file_path: &str) -> i32 {
     let mut result: HashSet::<(i32, i32)> = HashSet::new();
     let (width, height, antennas) = parse_input(file_path);
     // Iterate over antenna type

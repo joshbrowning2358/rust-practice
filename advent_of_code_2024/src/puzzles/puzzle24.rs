@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 use rand::prelude::*;
 
-use advent_of_code_2024::file_reader;
+use crate::file_reader;
 
 #[derive(Debug, Clone)]
 pub struct Equation {
@@ -11,26 +11,13 @@ pub struct Equation {
     pub out_node: String,
 }
 
-fn main() {
-    let full_path = file!();
-    let (_, mut file_name) = full_path.rsplit_once('/').unwrap();
-    (file_name, _) = file_name.split_once('.').unwrap();
-    let file_path = format!("data/{file_name}/input.txt");
-
-    let ans = part_a(&file_path);
-    println!("Answer to {file_name} a is {ans};");
-
-    let ans = part_b(&file_path);
-    println!("Answer to {file_name} b is {ans};");
-}
-
-fn part_a(file_path: &str) -> i64 {
+pub fn part_a(file_path: &str) -> i64 {
     let (mut initial_vals, mut equations) = parse_input(file_path);
     forward_propogate(&mut initial_vals, &mut equations);
     return compute_result(&initial_vals, "z")
 }
 
-fn part_b(file_path: &str) -> String {
+pub fn part_b(file_path: &str) -> String {
     let (init_vals, mut init_equations) = parse_input(file_path);
     
     let mut swapped_wires: Vec<(String, String)> = vec![];
