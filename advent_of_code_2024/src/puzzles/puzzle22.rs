@@ -1,4 +1,4 @@
-use std::collections::{HashSet,VecDeque};
+use std::collections::{HashMap,HashSet,VecDeque};
 
 use crate::file_reader;
 
@@ -16,7 +16,41 @@ pub fn part_a(file_path: &str) -> i64 {
     return result
 }
 
-pub fn part_b(file_path: &str) -> i32 {
+pub fn part_b(file_path: &str) -> i16 {
+    let nineteen: i32 = 19;
+    let secret_nums = parse_input(file_path);
+    let mut totals: HashMap<i32, i16> = HashMap::new();
+    for secret_num in secret_nums.iter() {
+        let mut secret = *secret_num;
+        let mut visited_keys: HashSet<i32> = HashSet::new();
+        let mut curr_delta: VecDeque<i16> = VecDeque::from([]);
+        let mut last_val = (secret.clone() % 10) as i16;
+        for _ in 0..2000 {
+            secret = evolution(secret);
+            let price = (secret.clone() % 10) as i16;
+            
+            curr_delta.push_back(price - last_val);
+            if curr_delta.len() > 4 {
+                curr_delta.pop_front().unwrap();
+                let mut key: i32 = 0;
+                for (i, val) in curr_delta.iter().enumerate() {
+                    key += (*val as i32) * nineteen.pow(i as u32);
+                }
+                if !visited_keys.contains(&key) {
+                    totals.entry(key).and_modify(|v| *v += price).or_insert(price);
+                    visited_keys.insert(key);
+                }
+            }
+            last_val = price;
+        }
+    }
+
+    println!("Hashmap has {} values!", totals.len());
+
+    return *totals.values().max().unwrap()
+}
+
+pub fn part_b_old(file_path: &str) -> i32 {
     let secret_nums = parse_input(file_path);
 
     let mut prices: Vec<Vec<i8>> = vec![];
@@ -41,8 +75,7 @@ pub fn part_b(file_path: &str) -> i32 {
     
     // Search for "candidates", i.e. 4 deltas that may lead to the highest price
     let cand = get_candidates(&prices, &deltas, 7);
-    let l = cand.len();
-    println!("Found {l} candidates!");
+    println!("Found {} candidates!", cand.len());
 
     return eval_candidates(&prices, &deltas, &cand)
 }

@@ -23,3 +23,5 @@ pub mod puzzle22;
 pub mod puzzle23;
 pub mod puzzle24;
 pub mod puzzle25;
+
+
