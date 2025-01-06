@@ -45,8 +45,6 @@ pub fn part_b(file_path: &str) -> i16 {
         }
     }
 
-    println!("Hashmap has {} values!", totals.len());
-
     return *totals.values().max().unwrap()
 }
 

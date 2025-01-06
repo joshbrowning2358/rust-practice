@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use advent_of_code_2024::puzzles::{puzzle1, puzzle2, puzzle3, puzzle4, puzzle5, puzzle6, puzzle7, puzzle8, puzzle9, puzzle10, puzzle11, puzzle12, puzzle13, puzzle14, puzzle15, puzzle16, puzzle17, puzzle18, puzzle19, puzzle20, puzzle21, puzzle22, puzzle23, puzzle24, puzzle25};
 
-fn criterion_benchmark(c: &mut Criterion) {
+fn puzzle_benchmark(c: &mut Criterion) {
     c.bench_function("puzzle 1a input", |b| b.iter(|| puzzle1::part_a("./data/puzzle1/input.txt")));
     c.bench_function("puzzle 1b input", |b| b.iter(|| puzzle1::part_b("./data/puzzle1/input.txt")));
     c.bench_function("puzzle 2a input", |b| b.iter(|| puzzle2::part_a("./data/puzzle2/input.txt")));
@@ -54,5 +54,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("puzzle 25b input", |b| b.iter(|| puzzle25::part_b("./data/puzzle25/input.txt")));
 }
 
-criterion_group!(benches, criterion_benchmark);
+criterion_group!{
+    name = benches;
+    config = Criterion::default().significance_level(0.01).sample_size(10);
+    targets = puzzle_benchmark
+}
 criterion_main!(benches);

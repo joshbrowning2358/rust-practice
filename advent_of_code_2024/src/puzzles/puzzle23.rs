@@ -31,6 +31,41 @@ pub fn part_b(file_path: &str) -> String {
     }
 
     let mut largest_set: Vec<usize> = vec![];
+    let mut next_cand: usize = 1;
+    let mut result: String = String::new();
+
+    for node in &node_names {
+        let mut cand_nodes = vec![node.clone()];
+        cand_nodes.append(&mut adjacency.get(node).unwrap().clone());
+        let mut set_indices: Vec<usize> = vec![0];
+        while set_indices.len() > 0 {
+            if next_cand == cand_nodes.len() {
+                next_cand = set_indices.pop().unwrap() + 1;
+            } else {
+                if is_connected_to_set(&adjacency, &cand_nodes, &set_indices, next_cand) {
+                    set_indices.push(next_cand);
+                    if set_indices.len() > largest_set.len() {
+                        largest_set = set_indices.clone();
+                        result = set_to_string(largest_set.clone(), &cand_nodes);
+                    }
+                }
+                next_cand += 1;
+            }
+        }
+
+    }
+
+    return result
+}
+
+pub fn part_b_old(file_path: &str) -> String {
+    let adjacency = parse_input(file_path);
+    let mut node_names: Vec<String> = vec![];
+    for k in adjacency.keys() {
+        node_names.push(k.clone());
+    }
+
+    let mut largest_set: Vec<usize> = vec![];
     let mut set_indices: Vec<usize> = vec![0];
     let mut next_cand: usize = 1;
     while (set_indices.len() > 0) | (next_cand < node_names.len() - largest_set.len()) {
@@ -45,6 +80,7 @@ pub fn part_b(file_path: &str) -> String {
             }
             next_cand += 1;
         }
+        println!("Set indices are {set_indices:?}");
     }
 
     return set_to_string(largest_set, &node_names)
