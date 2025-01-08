@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::env;
 
 use crate::file_reader;
 use crate::puzzle_solver;
