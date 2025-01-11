@@ -34,3 +34,7 @@ pub fn display_grid(grid: Vec<Vec<char>>) {
 //        return y_dist
 //    }
 //}
+
+pub fn dijkstra(start<T>, end<T>) {
+    println!("Test");
+}
