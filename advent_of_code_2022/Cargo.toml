@@ -10,3 +10,4 @@ name = "advent_of_code_2022"
 path = "src/lib.rs"
 
 [dependencies]
+binary-heap-plus = "0.5.0"
