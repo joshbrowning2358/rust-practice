@@ -41,7 +41,7 @@ pub fn display_grid(grid: Vec<Vec<char>>) {
 //    }
 //}
 
-#[derive(Clone, Eq, Hash)]
+#[derive(Clone, Eq, Hash, Debug)]
 pub struct Node<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone> {
     pub pt: Point<T>,
     pub path: Vec<Node<T, V>>,
