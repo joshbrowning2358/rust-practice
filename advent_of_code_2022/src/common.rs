@@ -1,8 +1,9 @@
 // An attribute to hide warnings for unused code.
 #![allow(dead_code)]
 
+use num::traits::Zero;
 use std::cmp::PartialEq;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::hash::Hash;
 
 use binary_heap_plus::BinaryHeap;
@@ -42,9 +43,9 @@ pub fn display_grid(grid: Vec<Vec<char>>) {
 //}
 
 #[derive(Clone, Eq, Hash, Debug)]
-pub struct Node<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone> {
+struct Node<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone> {
     pub pt: Point<T>,
-    pub path: Vec<Node<T, V>>,
+    pub path: Vec<Point<T>>,
     pub dist: V,
 }
 
@@ -54,45 +55,57 @@ impl<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone> PartialEq for Node<T
     }
 }
 
-pub fn dijkstra<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone>(start: Node<T, V>, end: Node<T, V>, get_neighbors: impl Fn(&Node<T, V>) -> Vec<Node<T, V>>) -> (V, Vec<Node<T, V>>) {
+pub fn dijkstra<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone + std::ops::Add<Output = V> + Zero + Copy>(
+    start: Point<T>,
+    end: Point<T>,
+    adjacency: &HashMap<Point<T>, Vec<(Point<T>, V)>>
+) -> (V, Vec<Point<T>>) {
+    return dijkstra_vec(start, vec![end], adjacency)
+}
+
+
+pub fn dijkstra_vec<T: Eq + Hash + Clone, V: std::cmp::Ord + Hash + Clone + std::ops::Add<Output = V> + Zero + Copy>(
+    start: Point<T>,
+    end_pts: Vec<Point<T>>,
+    adjacency: &HashMap<Point<T>, Vec<(Point<T>, V)>>
+) -> (V, Vec<Point<T>>) {
     // Types:
     //    T: Type of x/y points (probably i32, u32, f32, etc.)
-    //    V: Type of dist (probably u32 or f32)
+    //    V: Type of dist (probably u32 or f32, could be i32)
     // Args:
-    //    start: Starting node
-    //    end: Ending node
-    //    get_neighbors: Function getting neighbors when given node.  Should also update the paths of said neighbors to include themselves.
+    //    start: Starting point
+    //    end: Ending point
+    //    adjacency: HashMap specifying, for each point, a vector of (Point, distance) tuples which are adjacent
     let mut unvisited = BinaryHeap::from_vec_cmp(
         vec![], |a: &Node<T, V>, b: &Node<T, V>| b.dist.cmp(&a.dist)
     );
-    let mut visited: HashSet::<Node<T, V>> = HashSet::new();
-    // let mut to_explore_dists: HashMap::<Point, i32> = HashMap::new();
+    let mut visited: HashSet::<Point<T>> = HashSet::new();
 
-    unvisited.push(start);
+    unvisited.push(Node{pt: start.clone(), path: vec![start], dist: V::zero()});
 
-    let final_dist: V;
-    let final_path: Vec<Node<T, V>>;
     loop {
         let curr_node = unvisited.pop().unwrap();
-        if visited.contains(&curr_node) {
+        if visited.contains(&curr_node.pt) {
             continue
         }
-        visited.insert(curr_node.clone());
-        if curr_node == end {
-            final_dist = curr_node.dist;
-            final_path = curr_node.path;
-            break
+        visited.insert(curr_node.pt.clone());
+        for end in end_pts.iter() {
+            if curr_node.pt == *end {
+                return (curr_node.dist, curr_node.path)
+            }
         }
-        let candidates = get_neighbors(&curr_node);
-        for cand in candidates {
-            if visited.contains(&cand) {
+        let candidates = adjacency.get(&curr_node.pt).unwrap();
+        for (cand, dist) in candidates {
+            if visited.contains(cand) {
                 continue
             }
-            unvisited.push(cand);
+            let mut new_path = curr_node.path.clone();
+            new_path.push(cand.clone());
+            unvisited.push(Node{pt: cand.clone(), path: new_path, dist: *dist + curr_node.dist});
         }
         if unvisited.len() == 0 {
-            panic!("No new nodes to visit!");
+            // return Err(("No nodes left!").into())
+            panic!("No nodes left!");
         }
     }
-    return (final_dist, final_path)
 }

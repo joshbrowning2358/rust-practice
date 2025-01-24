@@ -1,7 +1,7 @@
 use std::env;
 
 use advent_of_code_2022::puzzle_solver::Solver;
-use advent_of_code_2022::puzzles::{puzzle01, puzzle02, puzzle03, puzzle04, puzzle05, puzzle06, puzzle08, puzzle09, puzzle10, puzzle11, puzzle12};
+use advent_of_code_2022::puzzles::{puzzle01, puzzle02, puzzle03, puzzle04, puzzle05, puzzle06, puzzle08, puzzle09, puzzle10, puzzle11, puzzle12, puzzle13};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -58,6 +58,7 @@ fn get_puzzle(day: u8) -> Box<dyn Solver> {
         10 => Box::new(puzzle10::Puzzle10),
         11 => Box::new(puzzle11::Puzzle11),
         12 => Box::new(puzzle12::Puzzle12),
+        13 => Box::new(puzzle13::Puzzle13),
         _ => {panic!("No puzzle implemented for day {day}!");}
     }
 }

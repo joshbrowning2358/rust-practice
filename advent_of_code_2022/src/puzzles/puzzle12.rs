@@ -1,8 +1,6 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
-use binary_heap_plus::BinaryHeap;
-
-use crate::common::{Point, Node};
+use crate::common::{Point, dijkstra, dijkstra_vec};
 use crate::file_reader;
 use crate::puzzle_solver;
 
@@ -11,71 +9,86 @@ pub struct Puzzle12;
 impl puzzle_solver::Solver for Puzzle12 {
     fn part_1(&self, file_path: &str) -> String {
         let (grid, start, end) = parse(file_path);
-        println!("Grid is {grid:?}, start {start:?}, end {end:?}");
 
-        let mut unvisited = BinaryHeap::from_vec_cmp(
-            vec![], |a: &Node<i16, i16>, b: &Node<i16, i16>| b.dist.cmp(&a.dist)
-        );
-        let mut visited: HashSet::<Point<i16>> = HashSet::new();
-        unvisited.push(Node{pt: start, path: vec![], dist: 0});
-
-        let mut final_dist = 1000;
-        loop {
-            let n = unvisited.pop().unwrap();
-            if visited.contains(&n.pt) {
-                println!("Already visited, skipping!");
-                continue
-            }
-            println!("Visiting node at {:?}", n.pt);
-            visited.insert(n.pt);
-
-            if n.pt == end {
-                final_dist = n.dist;
-                break
-            }
-
-            // First, check for the points that are within the grid
-            let mut new_points = vec![];
-            if n.pt.x > 0 {
-                new_points.push(Point{x: n.pt.x - 1, y: n.pt.y})
-            }
-            if (n.pt.x as usize) < grid[0].len() - 1 {
-                new_points.push(Point{x: n.pt.x + 1, y: n.pt.y})
-            }
-            if n.pt.y > 0 {
-                new_points.push(Point{x: n.pt.x, y: n.pt.y - 1})
-            }
-            if (n.pt.y as usize) < grid.len() - 1 {
-                new_points.push(Point{x: n.pt.x, y: n.pt.y + 1})
-            }
-
-            // Next, validate the grid heights are valid locations
-            for new_point in new_points {
-                if visited.contains(&new_point) {
-                    continue
+        let mut adjacency: HashMap<Point<i16>, Vec<(Point<i16>, i32)>> = HashMap::new();
+        for x in 0..grid[0].len() {
+            for y in 0..grid.len() {
+                let mut cand: Vec<(Point<i16>, i32)> = vec![];
+                if x > 0 {
+                    if grid[y][x - 1] <= grid[y][x] + 1 {
+                        cand.push((Point{x: x as i16 - 1, y: y as i16}, 1));
+                    }
                 }
-                if grid[new_point.y as usize][new_point.x as usize] <= grid[n.pt.y as usize][n.pt.x as usize] + 1 {
-                    let mut new_path = n.path.clone();
-                    new_path.push(n.clone());
-                    unvisited.push(Node{pt: new_point, path: new_path, dist: n.dist + 1});
+                if y > 0 {
+                    if grid[y - 1][x] <= grid[y][x] + 1 {
+                        cand.push((Point{x: x as i16, y: y as i16 - 1}, 1));
+                    }
                 }
-                println!("Adding point {new_point:?}");
-            }
-            if unvisited.len() == 0 {
-                panic!("Ran out of points to visit, something is wrong!");
+                if x < grid[0].len() - 1 {
+                    if grid[y][x + 1] <= grid[y][x] + 1 {
+                        cand.push((Point{x: x as i16 + 1, y: y as i16}, 1));
+                    }
+                }
+                if y < grid.len() - 1 {
+                    if grid[y + 1][x] <= grid[y][x] + 1 {
+                        cand.push((Point{x: x as i16, y: y as i16 + 1}, 1));
+                    }
+                }
+                adjacency.insert(Point{x: x as i16, y: y as i16}, cand);
             }
         }
-        return final_dist.to_string()
+        let (dist, _path) = dijkstra(start, end, &adjacency);
+        return dist.to_string()
     }
 
     fn part_2(&self, file_path: &str) -> String {
-        let (grid, start, end) = parse(file_path);
-        println!("Grid is {grid:?}, start {start:?}, end {end:?}");
-        return String::from("TODO")
+        let (grid, _, start) = parse(file_path);
+
+        // We want to go from highest -> lowest point so that we can stop as soon as we hit a valid starting point.
+        // Thus, we have to define the adjacency backwards to what we did previously, i.e. a node is adjacent to
+        // another iff it's only 1 higher or fewer
+        let mut adjacency: HashMap<Point<i16>, Vec<(Point<i16>, i32)>> = HashMap::new();
+        for x in 0..grid[0].len() {
+            for y in 0..grid.len() {
+                let mut cand: Vec<(Point<i16>, i32)> = vec![];
+                if x > 0 {
+                    if grid[y][x - 1] >= grid[y][x] - 1 {
+                        cand.push((Point{x: x as i16 - 1, y: y as i16}, 1));
+                    }
+                }
+                if y > 0 {
+                    if grid[y - 1][x] >= grid[y][x] - 1 {
+                        cand.push((Point{x: x as i16, y: y as i16 - 1}, 1));
+                    }
+                }
+                if x < grid[0].len() - 1 {
+                    if grid[y][x + 1] >= grid[y][x] - 1 {
+                        cand.push((Point{x: x as i16 + 1, y: y as i16}, 1));
+                    }
+                }
+                if y < grid.len() - 1 {
+                    if grid[y + 1][x] >= grid[y][x] - 1 {
+                        cand.push((Point{x: x as i16, y: y as i16 + 1}, 1));
+                    }
+                }
+                adjacency.insert(Point{x: x as i16, y: y as i16}, cand);
+            }
+        }
+
+        let mut end_pts: Vec<Point<i16>> = vec![];
+        for x in 0..grid[0].len() {
+            for y in 0..grid.len() {
+                if grid[y][x] == 1 {
+                    end_pts.push(Point{x: x as i16, y: y as i16});
+                }
+            }
+        }
+        let (dist, _path) = dijkstra_vec(start, end_pts, &adjacency);
+        return dist.to_string()
     }
 
     fn expected(&self) -> (&'static str, &'static str) {
-        ("", "")
+        ("420", "")
     }
 
     fn name(&self) -> &'static str {
