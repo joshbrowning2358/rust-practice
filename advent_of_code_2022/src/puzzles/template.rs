@@ -26,6 +26,7 @@ fn parse(file_path: &str) -> {
         for line in lines {
             if let Ok(row) = line {
                 ... = row.
+            }
         }
     }
     return
