@@ -13,3 +13,4 @@ pub mod puzzle12;
 pub mod puzzle13;
 pub mod puzzle14;
 pub mod puzzle15;
+pub mod puzzle16;

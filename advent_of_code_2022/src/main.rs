@@ -1,7 +1,7 @@
 use std::env;
 
 use advent_of_code_2022::puzzle_solver::Solver;
-use advent_of_code_2022::puzzles::{puzzle01, puzzle02, puzzle03, puzzle04, puzzle05, puzzle06, puzzle08, puzzle09, puzzle10, puzzle11, puzzle12, puzzle13, puzzle14, puzzle15};
+use advent_of_code_2022::puzzles::{puzzle01, puzzle02, puzzle03, puzzle04, puzzle05, puzzle06, puzzle08, puzzle09, puzzle10, puzzle11, puzzle12, puzzle13, puzzle14, puzzle15, puzzle16};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -22,7 +22,7 @@ fn main() {
 }
 
 fn run_all() {
-    for puzzle_id in 1..16 {
+    for puzzle_id in 1..17 {
         if puzzle_id == 7 {
             println!("IMPLEMENT DAY 7!!!");
             continue
@@ -61,6 +61,7 @@ fn get_puzzle(day: u8) -> Box<dyn Solver> {
         13 => Box::new(puzzle13::Puzzle13),
         14 => Box::new(puzzle14::Puzzle14),
         15 => Box::new(puzzle15::Puzzle15),
+        16 => Box::new(puzzle16::Puzzle16),
         _ => {panic!("No puzzle implemented for day {day}!");}
     }
 }
